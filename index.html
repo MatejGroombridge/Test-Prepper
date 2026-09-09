@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MATH2859 Practice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&family=Poppins:wght@400;500;600;700&family=Fraunces:opsz,wght,SOFT@9..144,400..700,50&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <div class="brand"><span id="brandCode">MATH2859</span> <span>practice</span></div>
+    <div class="subjectwrap hidden" id="subjectWrap">
+      <select id="subjectPicker" aria-label="Subject"></select>
+    </div>
+    <div class="tabs" id="tabs">
+      <button data-mode="practice" class="on">Practice</button>
+      <button data-mode="test">Mock test</button>
+      <button data-mode="drill">Drill</button>
+      <button data-mode="stats">Progress</button>
+    </div>
+    <div class="spacer"></div>
+    <div class="timer hidden" id="timer">00:00</div>
+    <button class="btn ghost sm" id="cheatBtn" title="Command reference (?)">Reference</button>
+    <button class="btn ghost sm" id="themeBtn" title="Toggle theme">◐</button>
+  </div>
+</header>
+
+<main>
+  <!-- ============ PRACTICE ============ -->
+  <section id="view-practice">
+    <div class="card" id="filterCard">
+      <h1 class="page">Practice by topic</h1>
+      <p class="lede small" id="practiceBlurb"></p>
+      <div class="chips" id="topicChips"></div>
+      <div class="tools">
+        <button class="btn primary" id="newQ">New question</button>
+        <button class="btn" id="sameQ" title="Same question type, new numbers">Same type, new numbers</button>
+        <span class="small muted">Shortcuts: <kbd>g</kbd> method · <kbd>Enter</kbd> check · <kbd>1</kbd>–<kbd>5</kbd> choose · <kbd>n</kbd> next · <kbd>?</kbd> reference</span>
+      </div>
+    </div>
+    <div id="qhost"></div>
+  </section>
+
+  <!-- ============ MOCK TEST ============ -->
+  <section id="view-test" class="hidden">
+    <div class="card" id="testSetup">
+      <h1 class="page">Mock test</h1>
+      <p class="lede small">Assembles a paper in the style of your past tests, hides all feedback until you submit, and reports your marks question by question.</p>
+      <div class="grid2">
+        <div>
+          <label class="field" for="testQs">Number of questions</label>
+          <input type="number" id="testQs" min="2" max="8" value="4">
+        </div>
+        <div>
+          <label class="field" for="testMins">Time limit (minutes)</label>
+          <input type="number" id="testMins" min="5" max="180" value="45">
+        </div>
+        <div>
+          <label class="field" for="testMix">Question mix</label>
+          <select id="testMix">
+            <option value="balanced">Balanced across all topics</option>
+            <option value="weak">Weight towards my weakest topics</option>
+            <option value="random">Fully random</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn primary" id="startTest">Start test</button>
+    </div>
+    <div id="testHost"></div>
+  </section>
+
+  <!-- ============ DRILL ============ -->
+  <section id="view-drill" class="hidden">
+    <div class="card">
+      <h1 class="page">Rapid drill</h1>
+      <p class="lede small" id="drillBlurb"></p>
+      <div class="chips" id="drillChips"></div>
+    </div>
+    <div class="card drillcard" id="drillCard"></div>
+  </section>
+
+  <!-- ============ STATS ============ -->
+  <section id="view-stats" class="hidden">
+    <div class="card">
+      <h1 class="page">Progress</h1>
+      <p class="lede small">Tracked in this browser only. Use it to pick what to practise next, not as a grade.</p>
+      <div class="statgrid" id="statTop"></div>
+    </div>
+    <div class="card">
+      <h2 class="section-head">Accuracy by topic</h2>
+      <div id="statTopics"></div>
+    </div>
+    <div class="card">
+      <h2 class="section-head">Accuracy by question type</h2>
+      <div id="statTemplates"></div>
+      <div class="tools">
+        <button class="btn ghost sm" id="resetStats">Reset all progress</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="footbar hidden" id="footbar">
+  <div class="footin">
+    <span class="scorechip" id="footScore"></span>
+    <div class="spacer"></div>
+    <div class="tools" id="footTools"></div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-head">
+    <h1 class="page" id="cheatTitle">Reference</h1>
+    <button class="btn ghost sm" id="closeDrawer">Close</button>
+  </div>
+  <p class="small muted" id="cheatBlurb"></p>
+  <div id="cheatBody"></div>
+</aside>
+
+<script src="js/stats.js"></script>
+<script src="js/finite.js"></script>
+<script src="js/subjects.js"></script>
+<!-- subject modules: add one line per subject -->
+<script src="js/subjects/math2859.js"></script>
+<script src="js/subjects/math2400.js"></script>
+<script src="js/subjects/comp3311.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
