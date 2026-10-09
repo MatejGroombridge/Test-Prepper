@@ -457,6 +457,13 @@ input.ans[readonly] { opacity: 0.75; }
 .opt.locked { cursor: default; }
 
 textarea.ans { width: 100%; min-height: 88px; resize: vertical; }
+.wordcount { font-size: 0.76rem; color: var(--color-subtle); text-align: right; margin-top: var(--space-1); font-variant-numeric: tabular-nums; }
+.wordcount.over { color: var(--color-negative); font-weight: 600; }
+.chips .chiplbl { align-self: center; font-size: 0.76rem; color: var(--color-subtle); margin-right: var(--space-1); }
+.fb .sol ul { margin: 0.25rem 0 0.6rem; padding-left: 1.2rem; }
+.fb .sol ul li { margin: 0.2rem 0; }
+.fb .sol h5 { margin: 0.7rem 0 0.15rem; font-family: var(--font-ui); font-size: 0.8rem; color: var(--color-ink); }
+.fb .sol h5:first-child { margin-top: 0; }
 
 .tools { display: flex; gap: var(--space-2); margin-top: var(--space-4); flex-wrap: wrap; align-items: center; }
 

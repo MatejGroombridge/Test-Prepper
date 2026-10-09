@@ -17,6 +17,8 @@
     if (html !== undefined) e.innerHTML = html;
     return e;
   };
+  // a subject may rename a few buttons to suit it (essays have no "numbers")
+  var label = function (key, dflt) { return (Q && Q.labels && Q.labels[key]) || dflt; };
 
   /* ================= persistence ================= */
 
@@ -45,10 +47,12 @@
     b[key].attempted++; b[key].marksAvail += marksAvail;
     if (correct) { b[key].correct++; b[key].marks += marks; }
   }
+  /* A part may carry its own topic/template (a mock-test section that mixes
+     topics), so its result is filed where it belongs. */
   function record(question, part, correct) {
     var m = part.marks || 0;
-    bump('topics', question.topic, correct, m, m);
-    bump('templates', question.id, correct, m, m);
+    bump('topics', part.topic || question.topic, correct, m, m);
+    bump('templates', part.tpl || question.id, correct, m, m);
     progress.totals.attempted++; progress.totals.marksAvail += m;
     if (correct) { progress.totals.correct++; progress.totals.marks += m; }
     save();
@@ -351,6 +355,7 @@
         node._skipped = !!noRecord;
         if (!opts.exam && !noRecord) record(q, part, ok);
         if (opts.onAnswer) opts.onAnswer();
+        if (node._onSettle) node._onSettle(!!ok);
       }
     }
     node._reveal = function () { /* replaced below per kind */ };
@@ -627,8 +632,24 @@
           }
         });
       }
+      if (part.rows && !isCode) ta.rows = part.rows;
       node.appendChild(ta);
       node._answerText = function () { return ta.value; };
+      if (part.wordLimit) {
+        var wc = el('div', 'wordcount');
+        var countWords = function () {
+          var n = (ta.value.match(/\S+/g) || []).length;
+          wc.textContent = n + ' / ' + part.wordLimit + ' words';
+          wc.classList.toggle('over', n > part.wordLimit);
+        };
+        ta.addEventListener('input', countWords);
+        countWords();
+        node.appendChild(wc);
+      }
+      var attempted = function () {
+        var v = ta.value.trim();
+        return !!v && !(node._prefill && v === node._prefill.trim());
+      };
       var showModel = function (selfOk) {
         if (answered) return;
         ta.readOnly = true;
@@ -654,7 +675,14 @@
           fb.appendChild(rate);
         } else settle(selfOk, html);
       };
-      node._reveal = function () { if (!answered) showModel(opts.exam ? false : undefined); };
+      /* Prose and code cannot be auto-marked. In a mock test an attempted answer
+         is handed back for self-assessment after submitting; a blank one is a
+         lost mark. */
+      node._reveal = function () {
+        if (answered) return;
+        if (opts.exam && attempted()) { node._pending = true; showModel(undefined); }
+        else showModel(opts.exam ? false : undefined);
+      };
       node.appendChild(buildTools(part, node, showModel, fb, opts, false,
         isCode ? 'Show sample answer' : 'Show model answer'));
     }
@@ -700,12 +728,12 @@
     var html = '';
     if (g.idea) html += '<p class="g-idea">' + g.idea + '</p>';
     if (g.steps && g.steps.length) {
-      html += '<h4>The method</h4><ol class="g-steps">' +
+      html += '<h4>' + (g.stepsTitle || 'The method') + '</h4><ol class="g-steps">' +
         g.steps.map(function (s2) { return '<li>' + s2 + '</li>'; }).join('') + '</ol>';
     }
-    if (g.worked) html += '<h4>Worked example</h4><div class="g-worked">' + g.worked + '</div>';
+    if (g.worked) html += '<h4>' + (g.workedTitle || 'Worked example') + '</h4><div class="g-worked">' + g.worked + '</div>';
     if (g.traps && g.traps.length) {
-      html += '<h4>Where marks get lost</h4><ul class="g-traps">' +
+      html += '<h4>' + (g.trapsTitle || 'Where marks get lost') + '</h4><ul class="g-traps">' +
         g.traps.map(function (t) { return '<li>' + t + '</li>'; }).join('') + '</ul>';
     }
     return html;
@@ -776,18 +804,18 @@
     var head = el('div', 'qhead');
     head.appendChild(el('h2', '', q.title));
     head.appendChild(el('span', 'pill', q.topic));
-    head.appendChild(el('span', 'pill grey', q.marks + ' marks'));
+    head.appendChild(el('span', 'pill grey', q.marks + (q.marks === 1 ? ' mark' : ' marks')));
     card.appendChild(head);
     /* The method guide is teaching material, so it is hidden during a mock test
        for the same reason hints are. */
     var spacerAdded = false;
     if (q.guide && !opts.exam) {
-      var gBtn = el('button', 'btn sm ghost guidebtn', 'How to do this');
+      var gBtn = el('button', 'btn sm ghost guidebtn', label('guide', 'How to do this'));
       var gBox = el('div', 'guidebox hidden');
       gBox.innerHTML = guidePanel(q.guide);
       gBtn.onclick = function () {
         var open = gBox.classList.toggle('hidden');
-        gBtn.textContent = open ? 'How to do this' : 'Hide method';
+        gBtn.textContent = open ? label('guide', 'How to do this') : label('guideOpen', 'Hide method');
         gBtn.classList.toggle('on', !open);
       };
       head.appendChild(el('div', 'spacer'));
@@ -818,7 +846,10 @@
   /* ================= practice mode ================= */
 
   function enabledTemplates() {
-    return Q.templates.filter(function (t) { return !state.topics || state.topics[t.topic]; });
+    return Q.templates.filter(function (t) {
+      return (!state.topics || state.topics[t.topic]) &&
+        (!state.formats || !t.format || state.formats[t.format]);
+    });
   }
 
   function newQuestion(sameTemplate) {
@@ -842,7 +873,7 @@
       card._partNodes.forEach(function (n) { if (n._reveal) n._reveal(); });
       updateFoot();
     };
-    var again = el('button', 'btn sm', 'Same type, new numbers');
+    var again = el('button', 'btn sm', label('same', 'Same type, new numbers'));
     again.onclick = function () { newQuestion(true); };
     var next = el('button', 'btn primary sm', 'Next question');
     next.onclick = function () { newQuestion(false); };
@@ -876,22 +907,30 @@
     });
   }
 
+  function fixedFormatTest() { return !!(Q.mockTest && Q.mockTest.build); }
+
   function startTest() {
-    var n = Math.max(2, Math.min(8, parseInt($('#testQs').value, 10) || 4));
     var mins = Math.max(5, Math.min(180, parseInt($('#testMins').value, 10) || 45));
-    var mix = $('#testMix').value;
-    var pool;
-    if (mix === 'weak') pool = weakestOrder();
-    else pool = Q.templates.slice().sort(function () { return Math.random() - 0.5; });
-    if (mix === 'balanced') {
-      // one per topic first, then fill
-      var seen = {}, first = [], rest = [];
-      pool.forEach(function (t) { if (!seen[t.topic]) { seen[t.topic] = 1; first.push(t); } else rest.push(t); });
-      pool = first.concat(rest);
+    var questions;
+    if (fixedFormatTest()) {
+      // the subject assembles a paper in the exact shape of its real test
+      questions = Q.mockTest.build().filter(Boolean);
+    } else {
+      var n = Math.max(2, Math.min(8, parseInt($('#testQs').value, 10) || 4));
+      var mix = $('#testMix').value;
+      var pool;
+      if (mix === 'weak') pool = weakestOrder();
+      else pool = Q.templates.slice().sort(function () { return Math.random() - 0.5; });
+      if (mix === 'balanced') {
+        // one per topic first, then fill
+        var seen = {}, first = [], rest = [];
+        pool.forEach(function (t) { if (!seen[t.topic]) { seen[t.topic] = 1; first.push(t); } else rest.push(t); });
+        pool = first.concat(rest);
+      }
+      var chosen = [];
+      for (var i = 0; i < n; i++) chosen.push(pool[i % pool.length]);
+      questions = chosen.map(function (t) { return Q.build(t.id, Math.floor(Math.random() * 1e9)); }).filter(Boolean);
     }
-    var chosen = [];
-    for (var i = 0; i < n; i++) chosen.push(pool[i % pool.length]);
-    var questions = chosen.map(function (t) { return Q.build(t.id, Math.floor(Math.random() * 1e9)); }).filter(Boolean);
 
     $('#testSetup').classList.add('hidden');
     var host = $('#testHost');
@@ -899,7 +938,7 @@
     var cards = questions.map(function (q, i) {
       var c = renderQuestion(q, { exam: true });
       var h = $('.qhead', c);
-      h.insertBefore(el('span', 'pill', 'Question ' + (i + 1)), h.firstChild);
+      h.insertBefore(el('span', 'pill', q.examLabel || 'Question ' + (i + 1)), h.firstChild);
       host.appendChild(c);
       return c;
     });
@@ -928,30 +967,57 @@
 
   function submitTest() {
     if (!state.test || state.test.submitted) return;
-    state.test.submitted = true;
-    clearInterval(state.test.timerId);
-    var totalOk = 0, totalParts = 0, marks = 0, avail = 0;
-    state.test.cards.forEach(function (card) {
+    var t = state.test;
+    t.submitted = true;
+    clearInterval(t.timerId);
+    var sc = { ok: 0, parts: 0, marks: 0, avail: 0, pending: 0 };
+    var entry = { when: Date.now(), marks: 0, avail: 0 };
+    var summaryBody = el('div');
+    var paintSummary = function () {
+      var pct = sc.avail ? Math.round(sc.marks / sc.avail * 100) : 0;
+      summaryBody.innerHTML = '<div class="statgrid" style="margin-top:12px">' +
+        '<div class="stat"><div class="n">' + sc.marks + '/' + sc.avail + '</div><div class="k">marks</div></div>' +
+        '<div class="stat"><div class="n">' + pct + '%</div><div class="k">score</div></div>' +
+        '<div class="stat"><div class="n">' + sc.ok + '/' + sc.parts + '</div><div class="k">parts correct</div></div>' +
+        '</div><p class="small muted" style="margin-top:12px">' +
+        (sc.pending
+          ? '<b>' + sc.pending + ' written answer' + (sc.pending > 1 ? 's' : '') + ' still to self-assess</b> against the model answer below — the score updates as you mark ' + (sc.pending > 1 ? 'them' : 'it') + '.'
+          : 'Full worked solutions are now shown against every part below.') + '</p>';
+      $('#footScore').innerHTML = 'Submitted · <b>' + sc.marks + '/' + sc.avail + '</b> marks (' + pct + '%)' +
+        (sc.pending ? ' · <span class="muted">' + sc.pending + ' to self-assess</span>' : '');
+      entry.marks = sc.marks;
+    };
+    t.cards.forEach(function (card) {
       var q = card._question;
       card._partNodes.forEach(function (n) {
         if (n._reveal) n._reveal();
-        totalParts++;
-        avail += n._part.marks || 0;
-        if (n._correct) { totalOk++; marks += n._part.marks || 0; }
+        sc.parts++;
+        sc.avail += n._part.marks || 0;
+        if (n._pending) {
+          // written answer: scored once the student self-assesses it
+          sc.pending++;
+          n._onSettle = function (ok) {
+            n._pending = false;
+            sc.pending--;
+            if (ok) { sc.ok++; sc.marks += n._part.marks || 0; }
+            record(q, n._part, ok);
+            paintSummary();
+            save();
+          };
+          return;
+        }
+        if (n._correct) { sc.ok++; sc.marks += n._part.marks || 0; }
         record(q, n._part, !!n._correct);
       });
       card.classList.add('review');
     });
-    progress.tests.push({ when: Date.now(), marks: marks, avail: avail });
-    save();
-    var pct = avail ? Math.round(marks / avail * 100) : 0;
+    entry.avail = sc.avail;
+    progress.tests.push(entry);
     var summary = el('div', 'card');
-    summary.innerHTML = '<h1 class="page">Test complete</h1>' +
-      '<div class="statgrid" style="margin-top:12px">' +
-      '<div class="stat"><div class="n">' + marks + '/' + avail + '</div><div class="k">marks</div></div>' +
-      '<div class="stat"><div class="n">' + pct + '%</div><div class="k">score</div></div>' +
-      '<div class="stat"><div class="n">' + totalOk + '/' + totalParts + '</div><div class="k">parts correct</div></div>' +
-      '</div><p class="small muted" style="margin-top:12px">Full worked solutions are now shown against every part below.</p>';
+    summary.innerHTML = '<h1 class="page">Test complete</h1>';
+    summary.appendChild(summaryBody);
+    paintSummary();
+    save();
     var again = el('button', 'btn primary sm', 'New test');
     again.onclick = function () {
       $('#testHost').innerHTML = '';
@@ -964,7 +1030,6 @@
     summary.appendChild(tools);
     $('#testHost').insertBefore(summary, $('#testHost').firstChild);
     $('#timer').classList.add('hidden');
-    $('#footScore').innerHTML = 'Submitted · <b>' + marks + '/' + avail + '</b> marks (' + pct + '%)';
     $('#footTools').innerHTML = '';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -1103,6 +1168,8 @@
     return all;
   }
 
+  var defaultTestBlurb = null;
+
   function setSubject(id, opts) {
     opts = opts || {};
     var next = window.Subjects.get(id) || subjectOrder()[0];
@@ -1124,7 +1191,17 @@
 
     $('#brandCode').textContent = Q.code;
     $('#practiceBlurb').textContent = Q.tagline || '';
+    $('#sameQ').textContent = label('same', 'Same type, new numbers');
+    $('#sameQ').title = label('same', 'Same question type, new numbers');
     document.title = Q.code + ' Practice';
+
+    // a subject with a fixed test format builds its own paper
+    var fixed = fixedFormatTest();
+    if (defaultTestBlurb === null) defaultTestBlurb = $('#testBlurb').innerHTML;
+    $('#testBlurb').innerHTML = (fixed && Q.mockTest.blurb) || defaultTestBlurb;
+    $('#testQsWrap').classList.toggle('hidden', fixed);
+    $('#testMixWrap').classList.toggle('hidden', fixed);
+    $('#testMins').value = (Q.mockTest && Q.mockTest.minutes) || 45;
     $$('#subjectPicker option').forEach(function (o) { o.selected = o.value === Q.id; });
 
     initTopics();
@@ -1166,22 +1243,40 @@
 
   /* ================= init ================= */
 
-  function initTopics() {
-    var host = $('#topicChips');
-    host.innerHTML = '';
-    state.topics = {};
-    allTopics().forEach(function (t) {
-      state.topics[t] = true;
+  /* One toggle chip per name; at least one chip in a row always stays on. */
+  function chipRow(host, names, store) {
+    names.forEach(function (t) {
+      store[t] = true;
       var c = el('button', 'chip on', t);
       c.onclick = function () {
-        state.topics[t] = !state.topics[t];
-        c.classList.toggle('on', state.topics[t]);
-        if (!Object.keys(state.topics).some(function (k) { return state.topics[k]; })) {
-          state.topics[t] = true; c.classList.add('on');
+        store[t] = !store[t];
+        c.classList.toggle('on', store[t]);
+        if (!Object.keys(store).some(function (k) { return store[k]; })) {
+          store[t] = true; c.classList.add('on');
         }
       };
       host.appendChild(c);
     });
+  }
+
+  function initTopics() {
+    var host = $('#topicChips');
+    host.innerHTML = '';
+    state.topics = {};
+    chipRow(host, allTopics(), state.topics);
+
+    // a second row when the subject tags its templates with a format
+    var formats = [];
+    Q.templates.forEach(function (tp) { if (tp.format && formats.indexOf(tp.format) < 0) formats.push(tp.format); });
+    var fhost = $('#formatChips');
+    fhost.innerHTML = '';
+    state.formats = null;
+    fhost.classList.toggle('hidden', formats.length < 2);
+    if (formats.length >= 2) {
+      state.formats = {};
+      fhost.appendChild(el('span', 'chiplbl', 'Format'));
+      chipRow(fhost, formats, state.formats);
+    }
   }
 
   function init() {

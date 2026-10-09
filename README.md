@@ -64,9 +64,43 @@ js/finite.js               number theory / finite field engine (verified vs symp
 js/subjects/math2859.js    MATH2859 templates, drills and reference
 js/subjects/math2400.js    MATH2400 templates, drills and reference
 js/subjects/comp3311.js    COMP3311 templates, sample answers and reference
+js/subjects/arts3367.js    ARTS3367 question bank, model answers, primers and mock test
 js/subjects/_template.js   annotated starting point for a new subject (not loaded)
 js/app.js                  UI, marking, progress — subject-agnostic
 ```
+
+## ARTS3367 Philosophy of Mind and Psychology
+
+For In-class Test 1 (20%): ten multiple-choice questions, then one mini-essay of up
+to 500 words chosen from three, on weeks 1–4. Built from lecture notes, the Week 2
+readings (Putnam, “The Nature of Mental States”; Searle on the Chinese Room) and the
+sample-question handout.
+
+- **105 multiple-choice questions** across nine topics: Descartes and dualism,
+  behaviourism, Smart’s identity theory, functionalism, the Chinese Room, Davidson’s
+  anomalous monism, supervenience and emergence, Kim’s causal exclusion argument, and
+  Yablo on proportionality. Each answer comes with an explanation that names the trap
+  in the most tempting wrong option. Option lengths are balanced, so the longest
+  answer is not a giveaway.
+- **32 extended-response questions**: the 10 from the sample handout, word for word
+  (flagged in the question), and 22 more written to the same pattern. Each has a
+  dot-point model answer laid out as an essay plan, and a checklist of what a marker
+  looks for. The handout asks for prose, not bullet points: the dot points are for
+  learning and planning.
+- **Format chips** filter practice to just multiple choice or just extended response.
+- **Topic primer** (`g`) on every question: summary, key claims, the argument step by
+  step, and common confusions.
+- **Mock test** in the real test’s shape: Section A (10 MCQs, one from every topic plus
+  one extra) and Section B (choose one of three essay prompts, with a live word count).
+  After you submit, you self-assess the essay and the score updates. The essay counts
+  10 marks here; that weighting is a guess, as is the default 45-minute limit.
+- **Reference drawer** fills the gaps in the notes (why “lightning is electrical
+  discharge” is misleading, Descartes on the cat, the missed Week 2) and sets out how
+  the essay is marked.
+
+In any subject’s mock test, a written or code answer you attempted is now handed back
+for self-assessment after you submit, not marked wrong automatically. Blank answers
+still score zero.
 
 ## COMP3311 Database Systems
 

@@ -10,7 +10,7 @@
      name:      'Statistics',            // shown in the subject picker
      tagline:   'short line under the title on the practice tab',
 
-     templates: [ {id, topic, title, marks, build(rng)}, ... ],
+     templates: [ {id, topic, title, marks, format?, build(rng)}, ... ],
      build:     function (templateId, seed) -> question | null,
 
      // optional, sensible defaults supplied below
@@ -19,15 +19,25 @@
      drillSets: [ {id, label, cards: [{q, a, alt, tag}]} ],
      reference: { title, blurb, fromDrill: 'setId', sections: [{heading, rows}] },
      // per-template teaching panel, shown behind a "How to do this" toggle:
-     //   guide: { idea, steps: [...], worked: html, traps: [...] }
-     drillBlurb: 'line shown on the drill tab'
+     //   guide: { idea, steps: [...], worked: html, traps: [...],
+     //            stepsTitle?, workedTitle?, trapsTitle? }
+     drillBlurb: 'line shown on the drill tab',
+     // rename buttons: { guide, guideOpen, same }
+     labels:    { guide: 'Topic primer', ... },
+     // a fixed-format paper instead of "N questions, mixed": build() returns
+     // the questions; the question-count and mix fields are then hidden
+     mockTest:  { minutes, blurb, build: function () -> [question] }
    }
+   Templates that set `format` get a second row of filter chips (e.g. multiple
+   choice vs extended response).
 
    A question returned by build():
-   { id, topic, title, marks, seed, intro, data: [block], parts: [part], plot? }
+   { id, topic, title, marks, seed, intro, data: [block], parts: [part], plot?, examLabel? }
    A data block: { name, text }  or  { name, langs: [{name, text}] }
                  (legacy: { name, matlab, python })
    A part: { kind: numeric|interval|choice|multi|written, label, marks, prompt, ... }
+           topic?, tpl?   file the result under a different topic/template
+           wordLimit?     written parts: live word count against a limit
 */
 (function (global) {
   'use strict';
