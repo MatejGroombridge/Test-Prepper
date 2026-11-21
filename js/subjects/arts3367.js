@@ -923,6 +923,348 @@
     ]
   };
 
+  /* ======================== hard multiple choice ==========================
+     Application, argument-structure and cross-thinker questions rather than
+     definitions. Same shape as MCQ, except the "I / II" statement questions, which give
+     the correct index in `a` and keep their options in order (`fixed`). */
+
+  var twoStatements = global.ARTS3367Kit.twoStatements;
+
+  var HARD = {
+    dualism: [
+      { q: 'Descartes: “I can doubt that my body exists, but I cannot doubt that I exist; so I am not my body.” A critic replies: “Lois Lane can doubt that Clark Kent can fly without doubting that Superman can.” What is the critic’s point?',
+        o: ['“Being doubted by me” reflects how a thing is thought of, so Leibniz’s law can’t apply to it',
+            'The premise is false: Descartes can in fact doubt his own existence as well as his body',
+            'Mind and body must be one thing, since Clark Kent and Superman are one person',
+            'Leibniz’s law is false, since identical things can differ in what is true of them'],
+        why: '“Can be doubted by me” reports a fact about my state of knowledge, not about the thing itself. Lois doubts Clark flies but not Superman — yet they are one man. So a difference in what I can doubt shows nothing about distinctness. Leibniz’s law itself is fine; it just doesn’t apply to such properties.' },
+      twoStatements('Which of the following statements are correct?',
+        'On Aristotle’s view, asking how the soul moves the body is as misguided as asking how a wax seal’s shape moves the wax.',
+        'Elisabeth’s objection relies on the mechanical picture on which bodies are moved only by contact with extended things.',
+        2,
+        'Both. I: an Aristotelian soul is the form (organisation) of the body, not a separate thing that pushes it, so the interaction question doesn’t arise in Descartes’ way. II: her worry is exactly that pushing requires contact and extension, which the Cartesian mind lacks.'),
+      { q: 'A Cartesian replies to Elisabeth: “Mind–body causation is a brute fact. Not every causal relation needs a mechanism.” What is the strongest reply on Elisabeth’s behalf?',
+        o: ['Descartes’ own physics says bodies move only by contact, so a brute non-contact cause breaks his system',
+            'Brute facts are never acceptable in philosophy, so any appeal to them simply begs the question',
+            'Causation requires correlation, and there is no correlation between thoughts and bodily movements',
+            'Anything without extension cannot exist at all, so the mind could not be a cause of anything'],
+        why: 'The best reply is internal: Descartes’ mechanism says extended bodies move only by impact. Exempting the mind isn’t just positing a brute fact — it contradicts his own account of how matter works. Thoughts and movements obviously are correlated, and “nothing unextended exists” would beg the question against Descartes.' },
+      { q: 'Neuroscientists find that every decision is preceded by a characteristic, predictable pattern of brain activity. What does this show about substance dualism?',
+        o: ['Nothing decisive — a dualist can accept the correlation, though it strengthens the case from parsimony',
+            'It refutes dualism, because a perfect correlation between two things proves they are identical',
+            'It proves dualism, because something non-physical must be what causes the brain activity',
+            'It is irrelevant, because substance dualism makes no claims about decisions or the brain'],
+        why: 'Correlation is compatible with identity, with causation either way, and with a common cause (see Smart and the sample model answer). A dualist can say the mind acts through the brain. What the evidence does is make the extra non-physical substance look idle — Occam’s razor pressure, not refutation.' },
+      { q: 'Which earlier view is closest in spirit to Putnam’s functionalism?',
+        o: ['Aristotle’s, since the soul is the organisation that gives a body its capacities, not a separate stuff',
+            'Descartes’, since mental states are defined by thinking, which is what minds do rather than what they are',
+            'Elisabeth’s, since she insists that the mind must be able to interact causally with the body',
+            'Skinner’s, since mental states are identified with patterns of behaviour rather than with matter'],
+        why: 'Aristotle identifies the soul with form — parts plus organisation, giving capacities like perception and movement — rather than with any special stuff. That is the functionalist idea: what matters is organisation and role, not material. Skinner’s view lacks the inner organisation; Descartes posits a separate substance.' },
+      { q: '“There is only one kind of stuff; it is fundamentally neither mental nor physical, but can be described in mental terms and in physical terms.” Which view is this, and how does it differ from Davidson’s?',
+        o: ['Neutral monism; Davidson is a materialist, holding that every event is a physical event',
+            'Anomalous monism; it is just Davidson’s point that one event has two kinds of description',
+            'Property dualism; Davidson rejects it because he denies that mental properties exist',
+            'Idealism; Davidson rejects it because he holds that every event is fundamentally mental'],
+        why: 'Neutral monism (Spinoza, Russell) makes the basic stuff neither mental nor physical. Davidson also allows two kinds of description, which is the trap — but for him the events are physical. Two vocabularies over physical events is materialism; two vocabularies over a neutral reality is neutral monism.' }
+    ],
+
+    behaviourism: [
+      { q: 'A methodological behaviourist finds reliable correlations between stimuli and a rat’s behaviour. Which conclusion follows from methodological behaviourism alone?',
+        o: ['None about whether the rat has mental states — the view is simply silent on them',
+            'The rat has no mental states, only dispositions to respond to stimuli',
+            'The rat’s mental states are identical to its behavioural dispositions',
+            'The rat’s mental states cause its behaviour but are beyond scientific study'],
+        why: 'Methodological behaviourism is a rule about how to do science: treat the mind as a black box. It says nothing about what (if anything) is in the box. Identifying mental states with dispositions is philosophical behaviourism; denying them is eliminativism.' },
+      { q: 'A glass can be fragile even if it is never struck. Using that analogy, what should a philosophical behaviourist say about someone in pain, alone, who shows no pain behaviour?',
+        o: ['Yes — a disposition can go unmanifested, though its conditions then need spelling out',
+            'No — pain simply is pain behaviour, and since none is occurring they cannot be in pain',
+            'Yes — an inner sensation is there, but it is currently blocked from causing behaviour',
+            'Neither — the claim is meaningless, since no observer could ever verify it either way'],
+        why: 'A disposition is a would-if fact, so it can be present without being manifested. The pressure comes next: the manifestation conditions (“would wince if … and if they didn’t want to hide it …”) keep mentioning other mental states. An inner sensation as cause is Smart’s view, not the behaviourist’s.' },
+      { q: 'A behaviourist analyses “Ann believes it will rain” as “Ann is disposed to take an umbrella when she goes out”. Which case best exposes the <i>holism</i> problem?',
+        o: ['Ann believes it will rain but wants to get wet, so she leaves the umbrella at home',
+            'Ann takes an umbrella purely out of habit, with no belief about rain at all',
+            'Ann believes it will rain, but there is no umbrella anywhere in her house',
+            'Ann is disposed to take an umbrella, but as it happens it never rains'],
+        why: 'Holism: what a belief disposes you to do depends on your other mental states — here a desire. To fix the analysis you must add “and she doesn’t want to get wet”, which is mental vocabulary again. The habit case attacks sufficiency differently; the missing umbrella is a non-mental condition; whether it rains is irrelevant.' },
+      twoStatements('On the dispositional analysis presented in lectures, which of these are true?',
+        '“Jack cried out because he was in pain” can be a correct explanation.',
+        'Jack’s pain was an inner event that caused him to cry out.',
+        0,
+        'I only. The lecture point: “Jack is in pain” can be true and explanatory, but not because pain is an inner cause of behaviour. Explaining by disposition (“it broke because it was fragile”) is legitimate; the inner-cause reading is Smart’s.'),
+      { q: 'Which view is most directly threatened by the claim that two people could behave identically in every possible circumstance while only one of them has experiences?',
+        o: ['Philosophical behaviourism', 'Methodological behaviourism', 'Davidson’s anomalous monism', 'Smart’s identity theory'],
+        why: 'If mental states just are behavioural dispositions, identical dispositions entail identical mental states, so the case is impossible by the theory’s lights. Methodological behaviourism makes no claim about experience. Smart and Davidson can say the two differ inside.' },
+      { q: 'Behaviourism’s legacy in reinforcement learning is sometimes cited in its favour. What does the success of reinforcement learning actually support?',
+        o: ['The methodological claim that behaviour can be predicted without positing inner states',
+            'The philosophical claim that mental words mean nothing more than patterns of behaviour',
+            'The identity theory, since reinforcement learning systems are physical machines',
+            'Eliminativism, since reinforcement learning systems obviously have no mental states'],
+        why: 'Shaping behaviour via reinforcement shows you can predict and control without modelling the inside — a methodological point. It says nothing about what “belief” or “pain” mean, which is what philosophical behaviourism claims.' }
+    ],
+
+    smart: [
+      { q: 'Smart grants that no experiment could decide between his theory and a dualism with psychophysical laws. How can he still call the identity theory empirical?',
+        o: ['Which brain state pain is, is found empirically; preferring identity to correlation is down to simplicity',
+            'He can’t — the two claims are inconsistent, and Smart quietly drops the claim that the theory is empirical',
+            'Occam’s razor is itself an empirical law, so choosing by simplicity counts as an experimental result',
+            'Introspection supplies the empirical evidence that sensations are brain processes rather than non-physical'],
+        why: 'Two levels. Which brain state pain is identical to is a matter for neuroscience. Whether the correlations it finds are identities rather than dualist laws can’t be settled by experiment — Smart settles it by parsimony.' },
+      { q: 'Which objection attacks Smart’s identity claim itself, rather than his reasons for preferring it?',
+        o: ['An octopus could be in pain without having any C-fibres',
+            'Occam’s razor is a rule of method, not a guide to truth',
+            'People used the word “pain” long before neuroscience',
+            'Psychophysical laws are no stranger than other laws'],
+        why: 'A pain without C-fibres falsifies “pain = C-fibre firing” directly (Leibniz’s law). Doubts about Occam’s razor and about the strangeness of psychophysical laws attack the motivation. The meaning objection Smart already answers: the identity isn’t a definition.' },
+      twoStatements('Which of these follow?',
+        'If pain is identical to C-fibre firing, then whenever C-fibres fire, pain occurs.',
+        'If pain is perfectly correlated with C-fibre firing, then pain is identical to C-fibre firing.',
+        0,
+        'I only. Identity gives necessary co-occurrence (one thing can’t occur without itself). But correlation doesn’t give identity — compare coffee and Mary’s favourite drink, or a dualist psychophysical law.'),
+      { q: 'Jack knows no neuroscience. He says “I’m in pain.” On Smart’s view, what is Jack’s report about?',
+        o: ['A brain process — though Jack doesn’t know it under that description',
+            'A non-physical sensation that is correlated with a brain process',
+            'Nothing at all — it is a learned replacement for wincing',
+            'His behaviour — it reports a disposition to cry out'],
+        why: 'Smart: “I am in pain” announces a neurological state. Jack can refer to it without knowing what it is, just as people referred to lightning before anyone knew it was electrical discharge. The “replacement for wincing” view is one Smart rejects.' },
+      { q: 'Suppose pain turns out to be correlated with a different brain state in every person. Which view best accommodates this while remaining materialist?',
+        o: ['Davidson’s token identity', 'Smart’s type identity', 'Species-specific type identity', 'Reductive materialism about pain'],
+        why: 'If no brain-state type is shared even within humans, both type identity and species-specific (local) identity fail, and with them reduction of pain. Token identity survives: each pain is some physical event, with no type in common — exactly Davidson’s view.' },
+      { q: 'Smart and the philosophical behaviourist both reject dualism. Which question divides them?',
+        o: ['Whether “Jack cries out because he is in pain” cites an inner cause of the cry',
+            'Whether psychology can ever be a genuinely scientific enterprise at all',
+            'Whether talk of pain commits us to the existence of anything non-physical',
+            'Whether pain behaviour can be publicly observed and measured by scientists'],
+        why: 'Both agree pain talk needn’t commit us to the non-physical, and that behaviour is observable. The split: for Smart pain is an inner brain process that causes the cry; for the behaviourist it is a disposition, not an inner cause.' }
+    ],
+
+    functionalism: [
+      { q: 'A Martian with a hydraulic “brain” and no neurons reacts to damage exactly as we do, and its internal states interact in the same pattern as ours. Which verdicts would Smart, Putnam and a philosophical behaviourist give on whether it is in pain?',
+        o: ['Smart: no; Putnam: yes; behaviourist: yes', 'Smart: yes; Putnam: yes; behaviourist: no',
+            'Smart: no; Putnam: no; behaviourist: yes', 'Smart: no; Putnam: yes; behaviourist: no'],
+        why: 'Smart ties pain to a neural type the Martian lacks. Putnam asks only about functional organisation, which matches. The behaviourist asks only about behavioural dispositions, which match.' },
+      { q: 'Which case is a problem for functionalism but <i>not</i> for the identity theory?',
+        o: ['A system with our functional organisation but made of other stuff, which intuitively feels nothing',
+            'An octopus that feels pain using a nervous system with a quite different structure from ours',
+            'A human whose C-fibres fire while they sincerely report feeling no pain whatsoever',
+            'An actor who perfectly fakes pain behaviour without feeling any pain at all'],
+        why: 'Functionalism must say the duplicate is in pain; if intuitively it isn’t (think of Searle), that hurts functionalism, while the identity theory happily says “no C-fibres, no pain”. The octopus and the dissociated human are problems for the identity theory; the actor is the behaviourist’s problem.' },
+      { q: 'Putnam says the functional-state hypothesis is not incompatible with dualism. Which claim is therefore consistent with functionalism?',
+        o: ['In some possible being, pain is realised in a non-physical soul',
+            'In every possible being, pain is identical to C-fibre firing',
+            'Pain is a disposition to behave with no inner state realising it',
+            'Pain has no causal relations to inputs, outputs or other states'],
+        why: 'Functionalism says what pain is (a causal role) and leaves open what realises it — even a soul. Insisting on C-fibres everywhere contradicts multiple realisability; denying an inner realiser or a causal role contradicts functionalism itself.' },
+      { q: '“Multiple realisability shows the mind isn’t physical, since pain can’t be identified with any physical state.” What is wrong with this argument?',
+        o: ['It slides from “no single physical type” to “not physical”, though each pain can still be physical',
+            'Nothing is wrong with it — this is precisely the conclusion Putnam himself draws from the octopus',
+            'Multiple realisability shows pain is a disjunction of physical states, so pain is a physical type',
+            'Multiple realisability applies only to computers and programs, never to minds and their states'],
+        why: 'MR refutes type identity, not physicalism. Every token pain can be a physical state (token physicalism), which is how most functionalists see it. Putnam argues against the brain-state hypothesis, not for dualism.' },
+      { q: 'Functionalism defines each mental state partly by reference to other mental states. Why doesn’t this make it circular, as holism did for behaviourism?',
+        o: ['It defines the states together, as a network of roles, rather than translating each into behaviour',
+            'It denies that mental states ever interact with one another, so no definition mentions another state',
+            'It defines each mental state by its physical realiser, which never mentions any other mental state',
+            'It accepts the circularity and argues that every definition in any science is circular in this way'],
+        why: 'Behaviourism needed to translate each mental term into behaviour alone, and the translations kept smuggling in other mental terms. Functionalism never promised that: it specifies the whole system of states at once by how they relate to inputs, outputs and one another.' },
+      { q: 'Which claim would Putnam and Davidson both accept?',
+        o: ['No single physical property need be shared by everyone in a given mental state',
+            'Mental states are defined by their causal roles within the organism',
+            'There are strict laws linking mental properties to physical properties',
+            'Mental states are fixed by the norms of rationality governing belief'],
+        why: 'Both reject type identity: Putnam via multiple realisability, Davidson via anomalism (no neural pattern every believer must share). Causal-role definitions are Putnam’s; rational norms are Davidson’s; neither accepts strict psychophysical laws.' }
+    ],
+
+    searle: [
+      { q: 'Which reply, if it succeeded, would most directly undermine Searle’s premise that syntax is not sufficient for semantics?',
+        o: ['Meaning comes from causal links between symbols and the world, so symbols plus such links suffice',
+            'The man in the room doesn’t understand Chinese, but the whole system of man, rules and paper does',
+            'We can never know whether anyone understands, except by watching their behaviour over time',
+            'Future machines may be built with new kinds of causal powers that we cannot yet imagine'],
+        why: 'The first attacks the premise itself: it offers a theory on which meaning arises from symbol manipulation plus world-connection (the robot-reply idea). The systems reply accepts the premise and disputes who understands; other minds changes the subject; “future machines” concedes the point about programs.' },
+      twoStatements('Which would Searle accept?',
+        'A sufficiently detailed computer simulation of a brain could be used to predict a person’s behaviour.',
+        'Such a simulation would thereby understand what the person understands.',
+        0,
+        'I only. Using simulations as tools is weak AI, which Searle accepts. But simulation is not duplication: a simulated brain no more understands than a simulated storm makes anything wet.'),
+      { q: 'Which change to the Chinese Room would Searle say makes <i>no</i> difference to his conclusion?',
+        o: ['Speeding the man up so that he answers as quickly as a native speaker',
+            'Teaching the man, in English, what each Chinese symbol refers to',
+            'Replacing the man and his rulebook with an actual Chinese speaker’s brain',
+            'Asking the man questions in English rather than in Chinese characters'],
+        why: 'Speed is irrelevant: it is the same formal symbol manipulation, only faster. Teaching meanings gives him semantics; a real brain has the right causal powers; English questions he already understands. Those all change what is going on.' },
+      { q: '“Searle proves too much: neurons just follow electrochemical rules, so by his reasoning brains couldn’t understand either.” What is Searle’s best reply?',
+        o: ['Brains understand because of their specific biological causal powers, not because they run a program',
+            'Individual neurons do understand Chinese, unlike the man in the room, which is the key difference',
+            'The brain is not a physical system at all, so the comparison with the room breaks down',
+            'Brains don’t understand either — only persons with non-physical souls really understand'],
+        why: 'Searle’s target is understanding <i>solely in virtue of running a program</i>. Brains may run programs too, but on his view they understand because of what their biology causally does (“brains cause minds”). He is no dualist, and he doesn’t credit neurons with understanding.' },
+      { q: 'To get from “the man doesn’t understand” to “running the program isn’t sufficient for understanding”, which assumption is needed?',
+        o: ['The man implements the whole program, so if implementation sufficed, he would understand',
+            'Understanding a language requires being able to translate it into one’s native language',
+            'Anything a human cannot do in their head, no computer could possibly do either',
+            'The room’s answers are not, in fact, as good as those of a native Chinese speaker'],
+        why: 'The argument is a counterexample: a case of running the program without understanding. That works only if the man really does implement the program — the systems reply’s target, and why Searle has him memorise it. If the answers weren’t native-quality, there would be no case at all.' },
+      { q: 'A large language model answers questions about apples fluently. Which statement fits Searle’s view?',
+        o: ['Its fluency settles nothing — whether it understands depends on causal powers, not on the program',
+            'It understands, because it learned its rules from data instead of having them written by hand',
+            'It cannot understand, because no non-biological system could ever understand anything at all',
+            'It understands apples but not Chinese, because it was trained only on English language text'],
+        why: 'For Searle, learned rules are still rules: training just writes the rulebook. But he doesn’t say only biology could ever think — any system with causal powers equivalent to the brain’s could. What matters is causal powers, not behaviour or how the program was produced.' }
+    ],
+
+    davidson: [
+      { q: 'Which combination of answers is Davidson’s? (1) Is every mental event a physical event? (2) Is every mental type a physical type? (3) Are there strict psychophysical laws? (4) Does the mental supervene on the physical?',
+        o: ['Yes, no, no, yes', 'Yes, yes, yes, yes', 'No, no, no, yes', 'Yes, no, no, no'],
+        why: 'Token identity (yes), no type identity (no), anomalism (no), and supervenience — Davidson introduced the term into philosophy of mind (yes). “Yes” all round is Smart’s package.' },
+      { q: 'A critic: “If no strict laws cover mental events under mental descriptions, mental events can’t cause anything.” What is Davidson’s reply?',
+        o: ['Causation needs a strict law under some description; the events’ physical descriptions supply it',
+            'Mental events don’t cause anything; they merely accompany the physical events that really do',
+            'There are strict laws covering mental events under their mental descriptions after all',
+            'Causation doesn’t require laws, so the nomological principle should simply be given up'],
+        why: 'Davidson keeps all three principles. Causation holds between events however described; the law requirement is met as long as the events fall under some strict law, and as physical events they do.' },
+      { q: 'Sally believes the marble is in the basket. Which discovery would most directly challenge Davidson’s denial of type identity?',
+        o: ['Decoders reliably read off that very belief from brain scans across many different people',
+            'Sally acts irrationally and looks for the marble in the box instead of the basket',
+            'Sally’s belief turns out to cause her hand to move towards the basket',
+            'Another child, Anne, turns out to have exactly the same belief as Sally'],
+        why: 'Davidson’s claim is falsifiable: if one neural pattern reliably went with that belief across people, there would be a shared physical type after all. Irrationality fits his view; causation is something he affirms; two believers proves nothing about shared neural types.' },
+      { q: '“People often believe against their evidence, so the rationality constraint is false and psychological laws are possible.” What is wrong with this?',
+        o: ['Rationality is a holistic norm: irrational beliefs show up only against a largely rational background',
+            'Nothing — Davidson admits there are strict psychological laws covering irrational people',
+            'People never in fact believe against their evidence, once their beliefs are properly described',
+            'Irrational beliefs are not propositional attitudes, so they fall outside the scope of psychology'],
+        why: 'Rationality is a norm, not a law: violating it doesn’t refute it, and we can only see a belief as irrational because the rest of the person’s attitudes make sense. Frequent irrationality is a reason there are no strict psychological laws, not a route to them.' },
+      twoStatements('Which follow from Davidson’s view?',
+        'Two physically identical people must have the same beliefs.',
+        'Two people with the same beliefs must be physically identical.',
+        0,
+        'I only. Supervenience: no mental difference without a physical difference. The converse fails — he denies there is any physical pattern everyone with the same belief must share.'),
+      { q: 'Which feature of anomalous monism is the target of the epiphenomenalism objection?',
+        o: ['Laws cover events only under physical descriptions, so mental properties seem to do no work',
+            'Mental events are non-physical, so it is unclear how they could interact with physical events',
+            'Mental properties supervene on physical ones, so mental events can have no effects of their own',
+            'Reasons are abstract objects, and abstract objects cannot cause anything in the physical world'],
+        why: 'Mental events cause — but in virtue of what? Laws connect them only under physical descriptions, so the event’s being a belief seems irrelevant to its effects. That is the opening Kim exploits. Davidson’s mental events are physical, so the second option misdescribes him.' }
+    ],
+
+    supervenience: [
+      { q: 'Which is consistent with the mental supervening on the physical?',
+        o: ['Two people in different brain states have exactly the same belief',
+            'Two people in exactly the same physical state have different beliefs',
+            'A person’s pain changes while every physical fact about them stays fixed',
+            'A being physically identical to you has no experiences at all'],
+        why: 'Supervenience forbids a mental difference without a physical difference — but allows a physical difference without a mental one. Different brains, same belief is just multiple realisability. The other three are mental differences with no physical difference.' },
+      { q: 'A property dualist says consciousness is non-physical, but arises from brain states by a law of nature. Does consciousness supervene on the physical, by their lights?',
+        o: ['Yes, but only given our laws of nature — under other laws a physical duplicate could lack it',
+            'No — property dualists deny that the mental depends on the physical in any way',
+            'Yes, of necessity — which makes this form of property dualism a version of materialism',
+            'No — supervenience is a relation that only ever holds between two physical properties'],
+        why: 'Supervenience comes in strengths. Nomological supervenience is compatible with property dualism. Materialism needs the mental to be fixed by the physical of necessity — physical duplicates are mental duplicates in any possible world — which is why zombies matter.' },
+      { q: 'Why is it a mistake to reason: “The mosaic’s picture supervenes on the tiles, so the picture is identical to this arrangement of tiles”?',
+        o: ['The same picture could have used a different arrangement, so it isn’t this one',
+            'Pictures are mental and tiles are physical, so supervenience cannot hold between them',
+            'Supervenience requires the picture to cause the arrangement, and that is never the case',
+            'It isn’t a mistake, since supervenience entails identity in every case where it holds'],
+        why: 'Supervenience allows many realisers for one higher-level property. If the picture could exist with another arrangement, it isn’t identical to this one. That is how supervenience delivers dependence without reduction.' },
+      { q: 'Researchers can’t predict from a neural network’s weights what it will be able to do once trained. How would a weak and a strong emergentist describe these capabilities?',
+        o: ['Weak: fixed by the parts but unpredictable for us. Strong: genuinely new, with causal powers of their own',
+            'Weak: the capabilities are illusions. Strong: the capabilities are real features of the network',
+            'Weak: they don’t supervene on the weights at all. Strong: they supervene on the weights fully',
+            'Weak: they have new causal powers of their own. Strong: they are also conscious experiences'],
+        why: 'Weak emergence is epistemic: unpredictable for us but fixed by the parts. Strong emergence is metaphysical: new features with their own causal powers — which Kim argues conflicts with causal closure.' },
+      { q: 'Which claim would a reductive and a non-reductive materialist both accept?',
+        o: ['There can be no mental difference without a physical difference',
+            'Each mental property is identical to some physical property',
+            'Psychology can never be fully explained in neuroscientific terms',
+            'Mental properties have novel causal powers of their own'],
+        why: 'Supervenience is the shared minimum. Property identity is what reductivists add and non-reductivists reject; irreducibility is the reverse. Novel causal powers is strong emergence, which neither side wants (Kim says the non-reductivist is stuck with it).' },
+      { q: '“Life is just biochemistry, yet biological explanation is still useful. So the mind too can be reduced while psychology stays useful.” Which is the best non-reductivist response, given the lecture?',
+        o: ['Consciousness and rational norms resist reduction in a way that biological functions don’t',
+            'Biology cannot be reduced to chemistry either, so the analogy actually supports dualism',
+            'An explanation’s usefulness shows that what it is about cannot be anything physical',
+            'Reduction of any higher-level science is impossible in principle, so nothing ever reduces'],
+        why: 'The lecture gave two reasons the mind is special: consciousness (something it is like to be you) and reason (normative explanation). These are disanalogies with life. The other options either overreach or don’t follow.' }
+    ],
+
+    kim: [
+      { q: 'Which premise of the exclusion argument would a substance dualist like Descartes most naturally reject, and which would a non-reductive physicalist like Yablo reject?',
+        o: ['Dualist: the causal closure of the physical. Non-reductivist: the exclusion principle',
+            'Dualist: the reality of mental causation. Non-reductivist: the causal closure of the physical',
+            'Dualist: the exclusion principle. Non-reductivist: the supervenience of the mental',
+            'Dualist: the irreducibility of the mental. Non-reductivist: the reality of mental causation'],
+        why: 'Descartes’ soul moves the body, so some physical events have non-physical causes: closure fails. Physicalists keep closure and supervenience, and keep mental causation, so they must attack exclusion — Yablo’s determinables do exactly that.' },
+      { q: 'A firing squad shows that an event can have two sufficient causes. Why doesn’t Kim let mental causation work like this?',
+        o: ['Firing squads are occasional and independent; this would be systematic, with one cause depending on the other',
+            'Firing squads involve only physical causes, and overdetermination is defined only for physical causes',
+            'In a firing squad neither bullet on its own is really sufficient for the prisoner’s death',
+            'Overdetermination is logically impossible, so the firing squad example must be described wrongly'],
+        why: 'Every mentally caused action would be overdetermined, always, and by a mental cause that depends on the very physical cause it duplicates. That is ad hoc. Independent coincidences like firing squads don’t have this structure.' },
+      { q: 'Why is Davidson especially vulnerable to Kim’s argument?',
+        o: ['He makes mental properties irreducible while events cause in virtue of falling under physical laws',
+            'He denies that mental events are physical events, so they cannot cause physical effects',
+            'He accepts strict psychophysical laws, which conflict with the causal closure of the physical',
+            'He denies the causal closure of the physical, which Kim treats as a core of materialism'],
+        why: 'Davidson is a token physicalist who denies property identity. If what makes an event a cause is its physical description, its mental properties look idle — Kim’s exclusion worry exactly.' },
+      twoStatements('Which of these are true of the causal closure principle (“every physical event that has a sufficient cause has a sufficient physical cause”)?',
+        'It rules out physical events that have no cause at all.',
+        'On its own, without the exclusion principle, it rules out non-physical causes of physical events.',
+        3,
+        'Neither. Closure allows uncaused physical events — it only speaks of events that have sufficient causes. And it doesn’t forbid a further, non-physical cause on top of the physical one. That needs the exclusion principle (no systematic overdetermination).'),
+      { q: 'If Kim’s argument is sound, what happens to the claim “the rising interest rate caused the recession”?',
+        o: ['It is threatened in the same way, unless interest rates reduce to lower-level properties',
+            'It is unaffected, because economics is not about minds or about any mental properties',
+            'It is unaffected, because interest rates are physical objects, just as bricks are',
+            'It is shown to be false, because only fundamental particles really exist at all'],
+        why: 'The generalisation worry: any property realised by lower-level properties faces the same exclusion reasoning. Kim’s way out is reduction, not denying the existence of economies.' },
+      { q: 'Which response keeps mental causation, accepts causal closure, <i>and</i> keeps mental properties irreducible?',
+        o: ['Denying that a mental property and its realiser are competing causes, as Yablo does',
+            'Accepting substance dualism, and allowing souls to push neurons around',
+            'Accepting that mental properties are real but causally idle (epiphenomenal)',
+            'Identifying each mental property with the physical property that realises it'],
+        why: 'Only Yablo’s move satisfies all three conditions. Identity keeps causation and closure but gives up irreducibility (that is reduction); dualism gives up closure; epiphenomenalism gives up mental causation.' },
+      { q: 'Kim seems to mean fundamental physics by “physical”. Why does this matter for his argument?',
+        o: ['If only fundamental physics counts, neuroscience is excluded too; if neuroscience counts, why not psychology?',
+            'If “physical” included mental properties, the argument would show that substance dualism is true',
+            'If “physical” meant observable, closure would become a claim about behaviour, as in behaviourism',
+            'It doesn’t matter, because the exclusion argument never actually relies on any notion of the physical'],
+        why: 'The dilemma: a narrow reading drains causal power from neuroscience and every special science; a broad reading invites the question why psychology isn’t “physical” too. Either way the argument’s force depends on where the line is drawn.' }
+    ],
+
+    yablo: [
+      { q: 'Sophie is trained to peck at scarlet only: she pecks at scarlet and ignores crimson and every other shade. Shown a scarlet chip, she pecks. What is the proportional cause?',
+        o: ['Being scarlet — being merely red would include crimson, at which she wouldn’t peck',
+            'Being red — the determinable is always the proportional cause of an effect',
+            'Being coloured — the most general property shared by everything she pecks',
+            'Both equally — determinables and determinates never compete as causes'],
+        why: 'Proportionality isn’t “the more general the better”. Here redness isn’t enough: some red things (crimson) would not have produced the peck. The cause should be specific enough to make the difference, and here that means scarlet.' },
+      { q: 'For which effect is a specific neural realiser more likely than the mental property to be the proportional cause?',
+        o: ['The exact trajectory and timing of one muscle twitch during the reach',
+            'The person reaching out for the glass of water on the table',
+            'The person saying “I’m thirsty” to a friend sitting nearby',
+            'The person getting up from the chair and walking to the kitchen'],
+        why: 'Proportionality cuts both ways. A very finely described effect may depend on details that only the specific realiser fixes; coarse-grained behaviour would have happened with any realiser of the desire.' },
+      twoStatements('Which of these are true?',
+        'If proportionality is only an epistemic constraint on explanation, Yablo’s response to Kim fails.',
+        'If neural states don’t necessitate the mental properties they realise, the determinable model fails.',
+        2,
+        'Both. I: an epistemic proportionality makes mental properties good to cite, not real causes — Kim’s point stands. II: a determinate necessitates its determinable (anything scarlet is red); a neural state that could occur without the mental property isn’t a way of having it.'),
+      { q: 'Kim: “A determinable has no causal powers beyond those of its determinates, so it adds nothing.” Which response fits Yablo best?',
+        o: ['No extra powers are needed: red is the cause because it isn’t too specific, though it acts via some determinate',
+            'Determinables have additional causal powers that their determinates lack, which is why they cause things',
+            'Determinates have no causal powers at all, so all genuine causation happens at the level of determinables',
+            'Causal powers have nothing to do with causation, so Kim’s complaint is simply irrelevant to the issue'],
+        why: 'Yablo needn’t claim new powers. Being the cause is a matter of being proportional to the effect, and a determinable can be proportional precisely because it leaves out irrelevant detail — while still being had via some determinate.' },
+      { q: 'Why might pain and its neural realiser fit the determinable model worse than red and scarlet?',
+        o: ['Scarlet is a specific way of being red; a neural state looks like a different kind of thing from pain',
+            'Pain is multiply realisable, whereas red is realised by just one specific shade in every case',
+            'Red is a physical property of surfaces, while scarlet is only a property of our experiences',
+            'C-fibre firing is a more general property than pain is, so the order of determination is reversed'],
+        why: 'Determinates of one determinable differ along a shared dimension (hue, brightness). It isn’t obvious a neural firing pattern is a “more specific way of being in pain” in that sense — echoing Davidson’s point that mental and physical properties belong to different families. Red is multiply realisable too (scarlet, crimson…).' }
+    ]
+  };
+
   /* ========================= extended response ============================
      sample: n  marks a question from the official sample-question handout,
      reproduced word for word. plan = [heading, [points]]; must = checklist. */
@@ -1273,147 +1615,14 @@
     ]
   };
 
-  /* ============================== builders ============================== */
+  /* ============================== builders ==============================
+     Templates, the builder and the mock test come from arts3367-kit.js. */
 
-  function shuffleChoice(rng, options, correctIdx) {
-    var idx = rng.shuffle(options.map(function (_, i) { return i; }));
-    return { options: idx.map(function (i) { return options[i]; }), correct: idx.indexOf(correctIdx) };
-  }
-
-  /* Deal questions from a shuffled deck per bank, so practice works through
-     every question before any repeats. */
-  var decks = {};
-  function deal(key, n, rng) {
-    if (!decks[key] || !decks[key].length) {
-      var all = [];
-      for (var i = 0; i < n; i++) all.push(i);
-      decks[key] = rng.shuffle(all);
-    }
-    return decks[key].pop();
-  }
-
-  function mcPart(rng, item, label) {
-    var sh = shuffleChoice(rng, item.o, 0);
-    return { kind: 'choice', label: label || '', marks: 1, prompt: item.q,
-             options: sh.options, correct: sh.correct, solution: item.why };
-  }
-
-  var PROSE_NOTE = '<p><i>Dot-point plan for learning. In the test, write it as connected prose — the handout says it expects coherent philosophical writing, not a list of bullet points.</i></p>';
-
-  function planHtml(plan) {
-    return plan.map(function (sec) {
-      return '<h5>' + sec[0] + '</h5><ul>' +
-        sec[1].map(function (p) { return '<li>' + p + '</li>'; }).join('') + '</ul>';
-    }).join('');
-  }
-
-  function sampleTag(e) {
-    return e.sample ? '<p class="small muted">Sample question ' + e.sample + ' from the In-class Test 1 handout.</p>' : '';
-  }
-
-  var ESSAY_PROMPT = 'Write a mini-essay of up to 500 words. Aim for a clear thesis, an explanation of the view, an objection or complication, and a reasoned verdict. (Or sketch a plan first, then compare it with the model.)';
-
-  function essayPart(e, label) {
-    return { kind: 'written', label: label || '', marks: 10, prompt: ESSAY_PROMPT,
-             model: PROSE_NOTE + planHtml(e.plan), checklist: e.must,
-             wordLimit: 500, rows: 14, placeholder: 'Write your answer here, in prose…' };
-  }
-
-  var TEMPLATES = [];
-  TOPICS.forEach(function (t) {
-    TEMPLATES.push({
-      id: 'mc-' + t.key, topic: t.name, format: 'Multiple choice',
-      title: t.name + ': multiple choice', marks: 1, guide: GUIDES[t.key],
-      build: function (rng) {
-        var bank = MCQ[t.key];
-        return { intro: '', data: [], parts: [mcPart(rng, bank[deal('mc-' + t.key, bank.length, rng)])] };
-      }
-    });
-    TEMPLATES.push({
-      id: 'er-' + t.key, topic: t.name, format: 'Extended response',
-      title: t.name + ': extended response', marks: 10, guide: GUIDES[t.key],
-      build: function (rng) {
-        var bank = ESSAYS[t.key];
-        var e = bank[deal('er-' + t.key, bank.length, rng)];
-        return { intro: '<p>' + e.q + '</p>' + sampleTag(e), data: [], parts: [essayPart(e)] };
-      }
-    });
+  var KIT = global.ARTS3367Kit.make({
+    GUIDES: GUIDES, TOPICS: TOPICS, MCQ: MCQ, HARD: HARD, ESSAYS: ESSAYS,
+    testName: "In-class Test 1", scopeLabel: "Weeks 1–4"
   });
-
-  /* Standard builder from _template.js. */
-  function build(templateId, seed) {
-    var tpl = null, i;
-    for (i = 0; i < TEMPLATES.length; i++) if (TEMPLATES[i].id === templateId) tpl = TEMPLATES[i];
-    if (!tpl) return null;
-    for (var k = 0; k < 60; k++) {
-      var rng = global.Stats.rng(seed + k * 7919);
-      var q;
-      try { q = tpl.build(rng); } catch (e) { q = null; }
-      if (q) {
-        q.id = tpl.id; q.topic = tpl.topic; q.title = tpl.title;
-        q.marks = q.parts.reduce(function (s, p) { return s + (p.marks || 0); }, 0);
-        q.seed = seed + k * 7919;
-        return q;
-      }
-    }
-    return null;
-  }
-
-  /* ============================== mock test ==============================
-     The real test's shape: Section A, ten multiple-choice questions (one from
-     every topic plus one extra, in course order); Section B, one mini-essay
-     chosen from three, drawn from three different topics. */
-
-  function buildMock() {
-    var rng = global.Stats.rng(Math.floor(Math.random() * 1e9));
-
-    var order = TOPICS.slice();
-    var extra = rng.pick(TOPICS);
-    order.splice(TOPICS.indexOf(extra) + 1, 0, extra);
-    var used = {};
-    var mcParts = order.map(function (t, i) {
-      var bank = MCQ[t.key], idx;
-      for (var tries = 0; tries < 8; tries++) {
-        idx = deal('mc-' + t.key, bank.length, rng);
-        if (!used[t.key + idx]) break;
-      }
-      used[t.key + idx] = true;
-      var p = mcPart(rng, bank[idx], (i + 1) + '.');
-      p.topic = t.name; p.tpl = 'mc-' + t.key;   // file the result under its own topic
-      return p;
-    });
-    var sectionA = {
-      id: 'mock-mc', topic: 'Weeks 1–4', title: 'Multiple choice', examLabel: 'Section A',
-      marks: mcParts.length, intro: '<p>Answer all ten questions. Each is worth 1 mark.</p>',
-      data: [], parts: mcParts, seed: 0
-    };
-
-    var topics = rng.shuffle(TOPICS).slice(0, 3).sort(function (a, b) {
-      return TOPICS.indexOf(a) - TOPICS.indexOf(b);
-    });
-    var essays = topics.map(function (t) {
-      var bank = ESSAYS[t.key];
-      return bank[deal('er-' + t.key, bank.length, rng)];
-    });
-    var model = PROSE_NOTE + essays.map(function (e, i) {
-      return '<p style="margin-top:14px"><b>If you answered question ' + (i + 1) + '</b></p>' + planHtml(e.plan) +
-        '<p><b>A marker would look for:</b></p><ul>' + e.must.map(function (m) { return '<li>' + m + '</li>'; }).join('') + '</ul>';
-    }).join('');
-    var part = {
-      kind: 'written', label: '', marks: 10, wordLimit: 500, rows: 16,
-      prompt: 'Write a mini-essay of up to 500 words answering <b>one</b> of the three questions. Start by noting which one you chose.',
-      placeholder: 'Question 2. …', model: model,
-      topic: 'Mock test essay', tpl: 'Mock test essay'
-    };
-    var sectionB = {
-      id: 'mock-essay', topic: 'Mock test essay', title: 'Extended response', examLabel: 'Section B',
-      marks: 10,
-      intro: '<p>Answer <b>one</b> of the following three questions. The marker expects coherent philosophical writing, not a list of bullet points or disconnected statements.</p><ol>' +
-        essays.map(function (e) { return '<li style="margin:6px 0">' + e.q + '</li>'; }).join('') + '</ol>',
-      data: [], parts: [part], seed: 0
-    };
-    return [sectionA, sectionB];
-  }
+  var TEMPLATES = KIT.templates, build = KIT.build, buildMock = KIT.buildMock;
 
   /* ============================ drill + reference ============================ */
 
@@ -1470,18 +1679,13 @@
     { tag: 'Who argues what', q: 'Yablo', a: 'Mental properties are determinables of their neural realisers; determinables and determinates don’t compete; proportional causes are often mental.' }
   ];
 
-  var mcCount = 0, essayCount = 0, sampleCount = 0;
-  TOPICS.forEach(function (t) {
-    mcCount += MCQ[t.key].length;
-    essayCount += ESSAYS[t.key].length;
-    ESSAYS[t.key].forEach(function (e) { if (e.sample) sampleCount++; });
-  });
+  var mcCount = KIT.counts.mc, hardCount = KIT.counts.hard, essayCount = KIT.counts.essay, sampleCount = KIT.counts.sample;
 
   var SUBJECT = {
     id: 'arts3367',
     code: 'ARTS3367',
-    name: 'Philosophy of Mind and Psychology',
-    tagline: 'In-class Test 1 (20%), weeks 1–4: ' + mcCount + ' multiple-choice questions and ' + essayCount +
+    name: 'Philosophy of Mind — Test 1',
+    tagline: 'In-class Test 1 (20%), weeks 1–4: ' + mcCount + ' core and ' + hardCount + ' hard multiple-choice questions, and ' + essayCount +
       ' extended-response questions (' + sampleCount + ' from the sample handout), each with a dot-point model answer. Use the Format chips to practise just one section.',
     templates: TEMPLATES,
     build: build,
@@ -1489,7 +1693,7 @@
 
     mockTest: {
       minutes: 45,
-      blurb: 'Same shape as the real in-class test: <b>Section A</b>, ten multiple-choice questions across all four weeks (1 mark each); <b>Section B</b>, one mini-essay of up to 500 words, chosen from three (10 marks here). Feedback is hidden until you submit; the essay is then self-assessed against the dot-point model answer. Set the time limit to match your real test.',
+      blurb: 'Same shape as the real in-class test: <b>Section A</b>, ten multiple-choice questions across all four weeks, about 60% from the hard bank (1 mark each); <b>Section B</b>, one mini-essay of up to 500 words, chosen from three (10 marks here). Feedback is hidden until you submit; the essay is then self-assessed against the dot-point model answer. Set the time limit to match your real test.',
       build: buildMock
     },
 

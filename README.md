@@ -64,7 +64,15 @@ js/finite.js               number theory / finite field engine (verified vs symp
 js/subjects/math2859.js    MATH2859 templates, drills and reference
 js/subjects/math2400.js    MATH2400 templates, drills and reference
 js/subjects/comp3311.js    COMP3311 templates, sample answers and reference
-js/subjects/arts3367.js    ARTS3367 question bank, model answers, primers and mock test
+js/subjects/arts3367-kit.js  ARTS3367 builders and mock test, shared by both tests
+js/subjects/arts3367.js    ARTS3367 Test 1 question bank, model answers, primers
+js/subjects/arts3367-t2.js ARTS3367 Test 2 question bank, model answers, primers
+js/subjects/comp2511-mcq.js      COMP2511 multiple-choice bank (load first of the four)
+js/subjects/comp2511-written.js  COMP2511 short answers, architecture answers, sequence diagrams
+js/subjects/comp2511-code.js     COMP2511 domain models, refactoring and build-from-scratch problems
+js/subjects/comp2511-practice.js COMP2511 course practice questions and Week 10 tutorial (MCQ, short, architecture)
+js/subjects/comp2511-labs.js     COMP2511 course exercises: TMS, Airline, Shopping, Barbie, Engineering, Gardening, Shipping, Business rules
+js/subjects/comp2511.js    COMP2511 primers, templates, mock exam, drills, reference
 js/subjects/_template.js   annotated starting point for a new subject (not loaded)
 js/app.js                  UI, marking, progress — subject-agnostic
 ```
@@ -82,21 +90,47 @@ sample-question handout.
   Yablo on proportionality. Each answer comes with an explanation that names the trap
   in the most tempting wrong option. Option lengths are balanced, so the longest
   answer is not a giveaway.
+- **54 hard multiple-choice questions**, six or so per topic, that test understanding
+  rather than definitions: applying a view to a new case (a hydraulic Martian, a pigeon
+  trained on scarlet only), finding the premise an argument needs, telling apart
+  objections that attack a claim from ones that attack its motivation, comparing
+  thinkers, and two-statement “I / II / both / neither” questions.
 - **32 extended-response questions**: the 10 from the sample handout, word for word
   (flagged in the question), and 22 more written to the same pattern. Each has a
   dot-point model answer laid out as an essay plan, and a checklist of what a marker
   looks for. The handout asks for prose, not bullet points: the dot points are for
   learning and planning.
-- **Format chips** filter practice to just multiple choice or just extended response.
+- **Format chips** filter practice to core multiple choice, hard multiple choice or
+  extended response.
 - **Topic primer** (`g`) on every question: summary, key claims, the argument step by
   step, and common confusions.
 - **Mock test** in the real test’s shape: Section A (10 MCQs, one from every topic plus
-  one extra) and Section B (choose one of three essay prompts, with a live word count).
+  one extra, about 60% of them from the hard bank) and Section B (choose one of three essay prompts, with a live word count).
   After you submit, you self-assess the essay and the score updates. The essay counts
   10 marks here; that weighting is a guess, as is the default 45-minute limit.
 - **Reference drawer** fills the gaps in the notes (why “lightning is electrical
   discharge” is misleading, Descartes on the cat, the missed Week 2) and sets out how
   the essay is marked.
+
+### Test 2
+
+A separate entry in the subject picker (**ARTS3367 · Philosophy of Mind — Test 2**),
+with its own progress, in the same shape as Test 1: **105 core and 54 hard
+multiple-choice questions** and **32 extended-response questions** (the 6 from the
+Test 2 sample handout, word for word, plus 26 more), across nine topics:
+
+- Consciousness: Nagel’s bat; Jackson’s knowledge argument and epiphenomenal qualia;
+  Levine’s explanatory gap and the three responses (dualism, illusionism,
+  bridge-building materialism); Strawson’s realistic physicalism and panpsychism;
+  Godfrey-Smith on life, nervous systems and Chalmers’ neuron replacement.
+- Personal identity: identity, Leibniz’s two principles and Locke’s memory theory
+  (circularity, quasi-memory); Olson’s animalism; Dennett’s centre of narrative
+  gravity and Ismael’s reply; Parfit on fission and what matters.
+
+The readings were inferred from the notes and the handout. The reference drawer flags
+where the notes and the readings differ (Chalmers’ replacement argument concludes
+that experience is *preserved*) and fills small gaps (Eddington, Reid’s brave officer,
+the prince and the cobbler). Both tests build their questions with `arts3367-kit.js`.
 
 In any subject’s mock test, a written or code answer you attempted is now handed back
 for self-assessment after you submit, not marked wrong automatically. Blank answers
@@ -123,6 +157,59 @@ Code is **not** auto-marked. Code boxes open prefilled with the right skeleton;
 you then reveal the sample answer or press **Copy for AI hint** (keyboard `c`),
 which puts the question, the schema, and what you have typed on the clipboard.
 
+
+## COMP2511 Object-Oriented Design & Programming — final exam
+
+Built from the 26T3 exam outline, the sample exam, the course schedule (weeks 1–10),
+the course’s practice questions and the Week 10 tutorial.
+The **mock exam** follows the real paper’s shape: 3 hours, 100 marks.
+
+| Section | Marks | What the mock gives you |
+|---|---|---|
+| 1 Multiple choice | 8 | 8 questions from different topics, always including architecture |
+| 2 Short answer | 22 | 4–8 questions whose marks add up to exactly 22 |
+| 3 Design & programming | 40 | a domain model (10) and two programming problems worth 30 together: usually a refactor (15) and a build (15), sometimes Barbie (10) with Gardening (20) |
+| 4 Software architecture | 30 | up to 5 architecture questions (20) and a Mermaid sequence diagram (10) |
+
+The banks:
+
+- **153 multiple-choice** across 11 topics: OO and polymorphism (overloading vs
+  overriding, static and field hiding, equals/hashCode), design by contract and LSP,
+  SOLID and the Law of Demeter, exceptions/generics/JUnit, functional interfaces and
+  streams, code smells, the six patterns in the course (Strategy, Composite, Observer,
+  Decorator, Factory, Singleton), concurrency, domain modelling, architecture
+  characteristics/ADRs/C4/Mermaid, and the five architectural styles.
+- **48 short answers** in the Section 2 style: "is this valid inheritance?", "what does
+  this print?", identify two smells and fix them, pick a pattern and map its roles.
+- **7 domain models** (airline, music streaming, hospital, library, gym, TMS, airline
+  schedules), each with a provided controller and a sample model with relationship and
+  cardinality comments.
+- **9 refactoring problems**: five of ours (Decorator, Observer, Strategy, Composite,
+  Abstract Factory) with starter code and tests, plus the course’s Shopping refactor
+  (Strategy), Barbie (Decorator), Engineering (four named smells) and Gardening (LSP,
+  Law of Demeter, Factory).
+- **6 build-from-scratch problems** with tests, in three parts like the sample exam’s
+  VSLite question, including the course’s Shipping discounts (Decorator) and Business
+  rules (Composite + JSON factory).
+- **24 architecture questions** and **9 Mermaid sequence diagrams** with sample
+  diagrams and a marker’s checklist.
+
+Questions taken from the course show a **Source** line (sample exam, course practice
+questions, Week 10 tutorial, course exercises); unmarked ones are ours. The course
+publishes no model answers for its short-answer practice questions or exercises, so
+those sample answers are ours. The course exercises come with starter code we did not
+have: the code in those questions is **reconstructed** to fit the spec and says so, so
+it will differ from the original. The GitLab class-diagram MCQ is rewritten with the
+multiplicities in text, and Week 10 G3 is answered “monolithic”, which is our reading.
+
+Code, diagrams and written answers are self-assessed against the sample answer and a
+checklist. Every question type has a **topic primer** (`g`) with the method, a worked
+example and where marks are lost. Five drill sets (pattern cues, smells → fixes,
+principles, Java and functional types, architecture) and a reference drawer with a
+Mermaid syntax sheet complete it. The banks are new questions in the sample exam’s
+style; two deliberately build on sample-exam scenarios with a twist (the library
+sequence diagram adds a reservation queue, and the e-commerce scaling question asks you
+to evaluate a migration plan).
 
 ## Adding a subject
 
