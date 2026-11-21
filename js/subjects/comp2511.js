@@ -24,6 +24,177 @@
 
   /* ============================== primers ============================== */
 
+  /* A reference table for a primer section. `rows` are arrays of cells, or
+     { group: 'Name', note: 'description' } to start a group. */
+  function gtable(head, rows) {
+    return '<table class="gt"><tr>' + head.map(function (h) { return '<th>' + h + '</th>'; }).join('') + '</tr>' +
+      rows.map(function (r) {
+        if (r.group) return '<tr class="grp"><td colspan="' + head.length + '">' + r.group + (r.note ? ' <span>— ' + r.note + '</span>' : '') + '</td></tr>';
+        return '<tr>' + r.map(function (c2, i) { return '<td' + (r.sym && i === 0 ? ' class="sym"' : '') + '>' + c2 + '</td>'; }).join('') + '</tr>';
+      }).join('') + '</table>';
+  }
+
+  /* UML class-diagram relationship symbol, drawn inline. */
+  function uml(kind) {
+    var K = {
+      assoc: { l: 'A', r: 'B', d: 'solid line' },
+      nav:   { l: 'A', r: 'B', arrow: 1, d: 'solid line with an open arrowhead at B' },
+      dep:   { l: 'A', r: 'B', arrow: 1, dash: 1, d: 'dashed line with an open arrowhead at B' },
+      agg:   { l: 'Whole', r: 'Part', diamond: 'hollow', d: 'solid line with a hollow diamond at the whole' },
+      comp:  { l: 'Whole', r: 'Part', diamond: 'filled', d: 'solid line with a filled diamond at the whole' },
+      inh:   { l: 'Child', r: 'Parent', tri: 1, d: 'solid line with a hollow triangle at the parent' },
+      real:  { l: 'Class', r: 'Interface', tri: 1, dash: 1, d: 'dashed line with a hollow triangle at the interface' }
+    }[kind];
+    var x1 = K.diamond ? 24 : 4, x2 = K.tri ? 132 : 146;
+    var st = ' stroke="currentColor" stroke-width="1.4"';
+    var s = '<svg class="uml" width="150" height="34" viewBox="0 0 150 34" role="img" aria-label="' + K.d + '">' +
+      '<text x="4" y="10">' + K.l + '</text><text x="146" y="10" text-anchor="end">' + K.r + '</text>' +
+      '<line x1="' + x1 + '" y1="22" x2="' + x2 + '" y2="22"' + st + (K.dash ? ' stroke-dasharray="5 4"' : '') + '/>';
+    if (K.diamond) s += '<polygon points="4,22 14,16.5 24,22 14,27.5"' + st + (K.diamond === 'filled' ? ' fill="currentColor"' : ' class="bg"') + '/>';
+    if (K.tri) s += '<polygon points="132,15 146,22 132,29" class="bg"' + st + '/>';
+    if (K.arrow) s += '<polyline points="136,16.5 146,22 136,27.5" fill="none"' + st + '/>';
+    return s + '</svg>';
+  }
+  function symRow(kind, cells) { var r = [uml(kind)].concat(cells); r.sym = true; return r; }
+
+  /* A UML class box drawn in text. */
+  function classBox(title, attrs, ops) {
+    var lines = [title].concat(attrs, ops), w = Math.max.apply(null, lines.map(function (l) { return l.length; })) + 2;
+    function row(t) { return '│ ' + t + new Array(w - t.length).join(' ') + '│'; }
+    var rule = function (a, b) { return a + new Array(w + 1).join('─') + b; };
+    return [rule('┌', '┐'), row(title), rule('├', '┤')].concat(attrs.map(row), [rule('├', '┤')], ops.map(row), [rule('└', '┘')]).join('\n');
+  }
+
+  var SMELL_CATALOGUE = gtable(['Smell', 'How to spot it', 'Fix (refactoring)'], [
+    { group: 'Bloaters', note: 'code that has grown too big to work with' },
+    ['Long Method', 'Does several things; sections need comments to explain them; hard to name.', 'Extract Method, Decompose Conditional'],
+    ['Large Class (God Class)', 'Many fields and methods serving several responsibilities.', 'Extract Class / Extract Subclass (SRP)'],
+    ['Primitive Obsession', 'Strings/ints for domain concepts ("card", type codes), magic numbers.', 'Replace Data Value with Object, Replace Type Code with Class/Subclasses/Strategy, named constants'],
+    ['Long Parameter List', 'More than three or four parameters.', 'Introduce Parameter Object, Preserve Whole Object'],
+    ['Data Clumps', 'The same group of fields or parameters keeps appearing together.', 'Extract Class, Introduce Parameter Object'],
+    { group: 'Object-orientation abusers', note: 'OO features used badly or not at all' },
+    ['Switch Statements', 'if/else or switch on a type or String, often repeated in several methods.', 'Replace Conditional with Polymorphism (subclasses, Strategy or State)'],
+    ['Refused Bequest', 'Subclass ignores inherited methods or overrides them to throw (an LSP violation).', 'Push Down Method, Replace Inheritance with Delegation'],
+    ['Temporary Field', 'Fields only set and used in some situations, null otherwise.', 'Extract Class, Introduce Null Object'],
+    ['Alternative Classes with Different Interfaces', 'Two classes do the same job with different method names.', 'Rename Method, Extract Superclass or interface'],
+    { group: 'Change preventers', note: 'one change forces many edits' },
+    ['Divergent Change', 'One class is edited for many unrelated reasons.', 'Extract Class (SRP)'],
+    ['Shotgun Surgery', 'One change means small edits across many classes.', 'Move Method / Move Field to gather it in one place'],
+    ['Parallel Inheritance Hierarchies', 'Adding a subclass in one hierarchy forces one in another.', 'Move Method / Field to collapse one hierarchy'],
+    { group: 'Dispensables', note: 'things the code would be better without' },
+    ['Duplicated Code', 'The same logic copied in two places, or in sibling subclasses.', 'Extract Method, Pull Up Method, Form Template Method'],
+    ['Lazy Class', 'A class that does too little to justify itself.', 'Inline Class, Collapse Hierarchy — or give it real behaviour'],
+    ['Data Class', 'Only fields with getters/setters; others do its work (often public fields).', 'Encapsulate Field/Collection, Move Method into it'],
+    ['Dead Code', 'Unused variables, parameters, methods or branches.', 'Delete it'],
+    ['Speculative Generality', 'Abstractions, hooks or parameters "just in case" that nothing uses (YAGNI).', 'Collapse Hierarchy, Inline Class, Remove Parameter'],
+    ['Comments', 'Comments explaining what unclear code does.', 'Extract Method, Rename so the code explains itself'],
+    { group: 'Couplers', note: 'too much coupling between classes' },
+    ['Feature Envy', 'A method uses another object’s data more than its own.', 'Move Method (or Extract then Move)'],
+    ['Inappropriate Intimacy', 'Classes reach into each other’s fields and internals.', 'Move Method/Field, Encapsulate Field, Hide Delegate'],
+    ['Message Chains', c('a.getB().getC().doIt()') + ' — the Law of Demeter broken.', 'Hide Delegate (tell, don’t ask)'],
+    ['Middle Man', 'A class that only forwards calls to another.', 'Remove Middle Man, Inline Class']
+  ]);
+
+  var REFACTORINGS = gtable(['Refactoring', 'What you do'], [
+    ['Extract Method', 'Move a fragment into a well-named method; call it from the original place.'],
+    ['Extract Class', 'Split a class doing two jobs; move the second job’s fields and methods to a new class.'],
+    ['Inline Class / Method', 'Fold something that does too little back into its caller.'],
+    ['Move Method / Move Field', 'Put behaviour on the class whose data it uses.'],
+    ['Pull Up Method / Field', 'Move code duplicated in subclasses into the parent.'],
+    ['Push Down Method / Field', 'Move something only one subclass needs out of the parent.'],
+    ['Replace Conditional with Polymorphism', 'Each branch becomes an override in a subclass or strategy; the conditional disappears.'],
+    ['Replace Type Code with Subclasses / Strategy', 'A type field (String/int/enum that drives behaviour) becomes a class hierarchy or strategy.'],
+    ['Replace Inheritance with Delegation', 'Hold the old parent as a field instead of extending it (composition over inheritance).'],
+    ['Introduce Parameter Object', 'Group parameters that travel together into one class.'],
+    ['Hide Delegate', 'Add a method on the first object so clients stop chaining through to the second.'],
+    ['Encapsulate Field / Collection', 'Make fields private; return copies or unmodifiable views of collections.'],
+    ['Replace Magic Number with Constant', 'Name the literal: ' + c('static final double CARD_SURCHARGE = 1.005') + '.'],
+    ['Form Template Method', 'Same algorithm with different steps in subclasses → the skeleton in the parent, steps overridden.']
+  ]);
+
+  var UML_NOTATION = gtable(['Symbol', 'Relationship', 'Means', 'In Java (and your comment)'], [
+    symRow('assoc', ['Association', '“knows about”: a lasting reference between objects.', c('private Staff invigilator; // association')]),
+    symRow('nav', ['Directed association', 'Only A holds a reference to B (navigable one way).', 'A has a B field; B has no A field']),
+    symRow('dep', ['Dependency', '“uses” briefly: a parameter, local variable or return type, not a field.', c('void pay(Card c)')]),
+    symRow('agg', ['Aggregation', 'Weak has-a: the part can exist on its own or be shared by several wholes.', c('List<Student> students; // aggregation')]),
+    symRow('comp', ['Composition', 'Strong has-a: the whole owns the part; it belongs to exactly one whole and dies with it.', c('List<Room> rooms; // composition')]),
+    symRow('inh', ['Inheritance (generalisation)', 'is-a: the child extends the parent.', c('class Pilot extends CrewMember')]),
+    symRow('real', ['Realisation', 'The class implements the interface.', c('class Card implements Payable')])
+  ]) + '<p class="small muted">Memory aid: the <b>diamond</b> always sits on the <b>whole</b>, and the <b>triangle</b> always points at the <b>parent or interface</b>. Filled diamond = composition (stronger), hollow = aggregation. ' +
+    'Solid lines are structural (fields, extends); dashed lines are the weaker links (dependency, implements).</p>';
+
+  var MULTIPLICITY = gtable(['Written', 'Means'], [
+    ['1', 'exactly one'], ['0..1', 'optional: zero or one'], ['* or 0..*', 'any number, including none'],
+    ['1..*', 'at least one'], ['2..4', 'a range (e.g. 2 to 4 crew)']
+  ]) + '<p>Read across the line: the number <b>beside a class</b> is how many of <i>that</i> class one object at the other end is linked to. ' +
+    c('Library 1 ◆—— 0..* Book') + ' means each library has 0..* books, and each book belongs to exactly 1 library.</p>' +
+    '<p>In the exam you write this as a comment on the field: ' + c('private List<Book> books; // composition, 1 Library ◆— 0..* Book') + '.</p>';
+
+  var CLASS_BOXES = '<pre class="code" style="background:none;padding:0">' + D.esc(classBox('«abstract» CrewMember', ['- id: String', '# name: String', '- count: int'],
+      ['+ getName(): String', '+ canWork(f: Flight): boolean'])) + '</pre>' +
+    gtable(['Notation', 'Means'], [
+      ['+  -  #  ~', 'public, private, protected, package visibility'],
+      [c('name: Type'), 'an attribute (field)'], [c('op(p: Type): Return'), 'an operation (method)'],
+      ['«interface»', 'an interface (methods only); ' + '«enumeration» for an enum'],
+      ['<i>italic</i> or {abstract}', 'abstract class or method'],
+      ['<u>underlined</u>', 'static field or method']
+    ]);
+
+  var PATTERN_TABLE = gtable(['Pattern', 'Intent', 'How it looks in Java', 'Roles'], [
+    { group: 'Behavioural' },
+    ['Strategy', 'Swap one algorithm for another at runtime.', 'Context has a field of a Strategy interface and calls it; concrete strategies implement it.', 'Context, Strategy, Concrete strategies'],
+    ['Observer', 'When the subject changes, everyone subscribed is notified.', 'Subject keeps ' + c('List<Observer>') + ' with attach/detach; ' + c('notify()') + ' loops calling ' + c('update()') + '.', 'Subject, Observer, Concrete observers'],
+    { group: 'Structural' },
+    ['Composite', 'Treat single objects and groups of them the same way (trees).', 'Composite implements Component and holds ' + c('List<Component>') + '; its operation loops over the children.', 'Component, Leaf, Composite'],
+    ['Decorator', 'Add responsibilities to an object dynamically, in any combination.', 'Decorator implements Component <i>and</i> wraps one; it delegates, then adds its bit.', 'Component, Concrete component, Abstract decorator, Concrete decorators'],
+    { group: 'Creational' },
+    ['Factory Method', 'Let a subclass decide which class to create.', 'Abstract ' + c('createX()') + ' in the creator, overridden in each subclass.', 'Creator, Concrete creators, Product'],
+    ['Abstract Factory', 'Create families of related objects that must match.', 'Factory interface with one create method per product; one concrete factory per family.', 'Abstract factory, Concrete factories, Abstract and concrete products'],
+    ['Singleton', 'Exactly one instance with global access.', 'Private constructor, private static instance, public static ' + c('getInstance()') + ' (synchronised if lazy).', 'Singleton']
+  ]);
+
+  var PRINCIPLE_TABLE = gtable(['Principle', 'Says', 'A violation looks like'], [
+    { group: 'SOLID' },
+    ['Single Responsibility', 'A class should have one reason to change.', 'A class that totals orders, prints receipts and emails customers.'],
+    ['Open-Closed', 'Open for extension, closed for modification.', 'Adding a new type means editing a switch in existing code.'],
+    ['Liskov Substitution', 'A subtype must work anywhere its parent is expected.', 'A subclass that throws on an inherited method, or strengthens a precondition.'],
+    ['Interface Segregation', 'No client should depend on methods it does not use.', 'Implementers stubbing out half of a fat interface.'],
+    ['Dependency Inversion', 'Depend on abstractions, not concrete classes.', 'A high-level class doing ' + c('new MySqlDatabase()') + ' itself.'],
+    { group: 'Others' },
+    ['Law of Demeter', 'Talk only to your friends: this, parameters, objects you create, your fields.', c('order.getCustomer().getAddress().getCity()')],
+    ['Composition over inheritance', 'Prefer holding behaviour in a field to inheriting it.', 'A subclass for every combination of features (class explosion).'],
+    ['DRY / KISS / YAGNI', 'Don’t repeat yourself; keep it simple; you aren’t gonna need it.', 'Copied logic; clever indirection; unused "future" hooks.'],
+    ['Coupling (aim low)', 'How much a module depends on others.', 'Changing one class forces changes in many others.'],
+    ['Cohesion (aim high)', 'How well a module’s contents belong together.', 'A Utils class of unrelated methods.']
+  ]);
+
+  var C4_TABLE = gtable(['C4 level', 'Shows', 'Boxes on it'], [
+    ['1 Context', 'The system as one box in its world.', 'People (users, roles), the system, external systems it talks to'],
+    ['2 Container', 'The deployable/runnable pieces inside the system boundary.', 'Web app, mobile app, API, database, message broker — each with its technology'],
+    ['3 Component', 'Inside one container.', 'Controllers, services, repositories and their responsibilities'],
+    ['4 Code', 'Inside one component.', 'Classes and interfaces (a UML class diagram); rarely drawn']
+  ]) + '<p class="small muted">Every arrow is labelled with what flows and how (e.g. "Places orders [JSON/HTTPS]").</p>';
+
+  var ADR_TEMPLATE = pre(`
+# ADR 7: Use a message broker for order events
+Status: Accepted
+Context: Orders must update stock, email and analytics, which are owned
+  by different teams and fail independently. Options: direct REST calls,
+  a shared database, a message broker.
+Decision: We will publish OrderPlaced events to a broker; each service
+  subscribes.
+Consequences: + services decoupled and scale independently;
+  + one failure no longer blocks checkout.
+  - eventual consistency; harder to trace; the broker must be operated.`);
+
+  var CHARACTERISTICS = gtable(['Characteristic', 'Asks'], [
+    ['Scalability', 'Can it handle steady growth in users or data?'], ['Elasticity', 'Can it handle sudden bursts, then shrink back?'],
+    ['Availability', 'Is it up when needed (e.g. 99.9%)?'], ['Fault tolerance', 'Does it keep working when a part fails?'],
+    ['Performance', 'How fast is a response, and how much throughput?'], ['Security', 'Is data and access protected?'],
+    ['Maintainability / Testability', 'How easy is it to change and test?'], ['Deployability', 'How easily and often can it be released?'],
+    ['Interoperability', 'Can it work with other systems?']
+  ]);
+
   var GUIDES = {
     oo: {
       idea: 'Java decides <i>which method signature</i> at compile time from declared types, and <i>which body</i> at runtime from the object’s class. Almost every "what does this print?" question is testing that split.',
@@ -79,6 +250,7 @@ a.kind();               // static: Animal.kind() — hidden, not overridden`) +
         '"High-level class constructs a concrete low-level class" → <b>Dependency Inversion</b> (depend on an interface; inject it).',
         '"a.getB().getC().doThing()" → <b>Law of Demeter</b> (tell, don’t ask).'
       ],
+      sections: [{ title: 'The principles at a glance', html: PRINCIPLE_TABLE }],
       worked: '<p>Coupling vs cohesion with a scenario (a common 4-mark question): define both, classify the code (e.g. high coupling, low cohesion), then tie it to the scenario’s people: developers who only know their own area won’t see the ripple effects; frequently changing requirements multiply them; many people editing one class causes conflicts.</p>',
       traps: [
         'Naming the principle but not explaining the consequence in the given scenario.',
@@ -136,6 +308,10 @@ students.stream()
         '<b>Fix</b> with a named refactoring: Extract Method/Class, Move Method, Replace Conditional with Polymorphism, Introduce Parameter Object, Hide Delegate, Replace Type Code with Class/Strategy.',
         'Keep behaviour identical: the regression tests must still pass.'
       ],
+      sections: [
+        { title: 'The smells to know', html: '<p class="small muted">Grouped as in the course’s refactoring catalogue. In exam code the moderate-to-severe ones are usually Switch Statements, Duplicated Code, Large Class, Long Method, Refused Bequest, Feature Envy, Message Chains, Data Class and Primitive Obsession.</p>' + SMELL_CATALOGUE },
+        { title: 'Refactoring techniques', html: REFACTORINGS }
+      ],
       worked: '<p>Type switches repeated across methods → <b>Switch Statements</b> + Open-Closed violation → Replace Conditional with Polymorphism (subclasses or Strategy). ' +
         '<code>a.getB().getC().x()</code> → <b>Message Chains</b> / Law of Demeter → Hide Delegate. Same parameters travelling together → <b>Data Clumps</b> → Introduce Parameter Object.</p>',
       traps: [
@@ -157,12 +333,10 @@ students.stream()
       ],
       worked: '<p>Justification template (3 marks): <b>Pattern.</b> Role 1 = domain thing; Role 2 = domain thing; Role 3 = domain thing. ' +
         'Then one sentence on the problem it solves here (runtime swapping / no class explosion / uniform treatment / loose coupling) and one on extensibility (new X is a new class, nothing existing changes).</p>' +
-        '<table class="mini"><tr><th>Pattern</th><th>Roles</th></tr>' +
-        '<tr><td>Strategy</td><td>Context, Strategy interface, Concrete strategies</td></tr>' +
-        '<tr><td>Composite</td><td>Component, Leaf, Composite (holds children)</td></tr>' +
-        '<tr><td>Decorator</td><td>Component, Concrete component, Abstract decorator (wraps a component), Concrete decorators</td></tr>' +
-        '<tr><td>Observer</td><td>Subject (attach/detach/notify), Observer interface, Concrete observers</td></tr>' +
-        '<tr><td>Abstract Factory</td><td>Abstract factory, Concrete factories, Abstract products, Concrete products</td></tr></table>',
+        '<p><i>Example:</i> <b>Decorator.</b> Component = ' + c('BarbieDoll') + '; concrete component = ' + c('Barbie') + '; abstract decorator = ' + c('Accessory') + ' (wraps a BarbieDoll); concrete decorators = ' + c('Car') + ', ' + c('DreamHouse') + '. ' +
+        'Accessories stack in any combination at runtime without a subclass per combination, and a new accessory is one new class.</p>',
+      workedTitle: 'Justifying a pattern',
+      sections: [{ title: 'The patterns at a glance', html: PATTERN_TABLE }],
       traps: [
         'Naming a pattern without mapping its roles to the scenario.',
         'Strategy vs State vs Decorator confusion: Strategy swaps an algorithm the client picks; Decorator wraps and stacks.',
@@ -197,6 +371,12 @@ students.stream()
         '<b>Verbs → methods</b>, placed on the class that owns the data; check every controller method can be implemented from your model.',
         '<b>Justify</b> non-obvious decisions in JavaDoc.'
       ],
+      sections: [
+        { title: 'UML relationship symbols', html: UML_NOTATION },
+        { title: 'Multiplicities (cardinalities)', html: MULTIPLICITY },
+        { title: 'Class boxes', html: CLASS_BOXES }
+      ],
+      workedTitle: 'Writing it as code (what the exam wants)',
       worked: pre(`
 public class Classroom {
     private int capacity;
@@ -224,6 +404,11 @@ public class Centre {
         '<b>ADR</b>: Title, Status, Context (forces and options), Decision (active voice), Consequences (good <i>and</i> bad).',
         '<b>C4</b>: Context (system as one box, users, external systems) → Container (deployable units and technology) → Component (inside one container) → Code.',
         '<b>Logical components</b>: actors → actions → group related actions → check cohesion/coupling and characteristics.'
+      ],
+      sections: [
+        { title: 'Architecture characteristics', html: CHARACTERISTICS },
+        { title: 'C4 model levels', html: C4_TABLE },
+        { title: 'ADR template', html: ADR_TEMPLATE }
       ],
       traps: [
         'Confusing scalability with elasticity.',
@@ -303,11 +488,18 @@ sequenceDiagram
       'Renaming public methods the tests call.',
       'Spending the time on part a: it is worth a few marks; the refactor carries the bulk.',
       'Code that does not compile — in the real exam that can mean no automarking marks.'
+    ],
+    sections: [
+      { title: 'The smells to know', html: SMELL_CATALOGUE },
+      { title: 'Refactoring techniques', html: REFACTORINGS },
+      { title: 'The patterns at a glance', html: PATTERN_TABLE },
+      { title: 'The principles at a glance', html: PRINCIPLE_TABLE }
     ]
   };
   var GUIDE_SCRATCH = {
     idea: 'Build-from-scratch questions give a domain and a controller. Identify the pattern first, design the interface it implies, then implement the controller methods by delegating to the model — the controller should wire things up, not hold the logic.',
     stepsTitle: 'A plan for the 15 marks',
+    sections: [{ title: 'The patterns at a glance', html: PATTERN_TABLE }],
     steps: [
       'Read the tests and examples: they fix the class names, constructors and exact output formats.',
       'Name the pattern and map its roles (part a).',

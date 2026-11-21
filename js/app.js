@@ -731,6 +731,11 @@
       html += '<h4>' + (g.stepsTitle || 'The method') + '</h4><ol class="g-steps">' +
         g.steps.map(function (s2) { return '<li>' + s2 + '</li>'; }).join('') + '</ol>';
     }
+    // Optional reference sections (catalogues, notation tables) between the
+    // method and the worked example.
+    (g.sections || []).forEach(function (sec) {
+      html += '<h4>' + sec.title + '</h4><div class="g-worked">' + sec.html + '</div>';
+    });
     if (g.worked) html += '<h4>' + (g.workedTitle || 'Worked example') + '</h4><div class="g-worked">' + g.worked + '</div>';
     if (g.traps && g.traps.length) {
       html += '<h4>' + (g.trapsTitle || 'Where marks get lost') + '</h4><ul class="g-traps">' +

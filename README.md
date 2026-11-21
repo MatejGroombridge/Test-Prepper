@@ -204,7 +204,11 @@ multiplicities in text, and Week 10 G3 is answered “monolithic”, which is ou
 
 Code, diagrams and written answers are self-assessed against the sample answer and a
 checklist. Every question type has a **topic primer** (`g`) with the method, a worked
-example and where marks are lost. Five drill sets (pattern cues, smells → fixes,
+example and where marks are lost. Several primers also carry reference tables: the
+full code-smell catalogue with fixes and the refactoring techniques, UML relationship
+symbols (hollow vs filled diamonds, triangles, dashed lines), multiplicities and class
+boxes, the patterns and principles at a glance, and architecture characteristics, C4
+levels and an ADR template. Five drill sets (pattern cues, smells → fixes,
 principles, Java and functional types, architecture) and a reference drawer with a
 Mermaid syntax sheet complete it. The banks are new questions in the sample exam’s
 style; two deliberately build on sample-exam scenarios with a twist (the library

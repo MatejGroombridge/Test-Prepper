@@ -765,6 +765,26 @@ input.ans.wide { width: 320px; max-width: 100%; }
 .guidebox .step b { color: var(--color-green); font-family: var(--font-ui); font-weight: 600; }
 .guidebox .ans { color: var(--color-green); font-weight: 600; }
 
+/* Reference tables inside a primer (smell catalogues, notation keys). */
+.guidebox table.gt { font-size: 0.86rem; line-height: 1.5; }
+.guidebox table.gt th {
+  text-align: left; padding: 0.3rem 0.75rem 0.3rem 0;
+  font-family: var(--font-ui); font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-subtle);
+  border-bottom: 1px solid var(--color-line);
+}
+.guidebox table.gt td { padding: 0.4rem 0.75rem 0.4rem 0; border-bottom: 1px solid var(--color-border); }
+.guidebox table.gt tr.grp td {
+  padding-top: 0.8rem; border-bottom: 0;
+  font-family: var(--font-ui); font-size: 0.74rem; font-weight: 700; color: var(--color-green);
+}
+.guidebox table.gt tr.grp td span { font-family: var(--font-body); font-weight: 400; color: var(--color-subtle); }
+.guidebox table.gt td:first-child { font-weight: 600; white-space: nowrap; }
+.guidebox table.gt td.sym { white-space: nowrap; width: 1%; }
+.guidebox svg.uml { display: block; color: var(--color-ink); }
+.guidebox svg.uml .bg { fill: var(--color-surface); }
+.guidebox svg.uml text { fill: var(--color-subtle); font: 10px var(--font-ui); }
+
 /* ---------- code answers + copy-for-AI ---------- */
 textarea.ans.codearea {
   font-family: var(--mono);
