@@ -13,7 +13,7 @@
 
 <header>
   <div class="bar">
-    <div class="brand"><span id="brandCode">MATH2859</span> <span>practice</span></div>
+    <div class="brand"><span id="brandCode">MATH2859</span> <span class="brandword">practice</span><span class="brandapp">Test Prepper</span></div>
     <div class="subjectwrap hidden" id="subjectWrap">
       <select id="subjectPicker" aria-label="Subject"></select>
     </div>
@@ -33,16 +33,9 @@
 <main>
   <!-- ============ PRACTICE ============ -->
   <section id="view-practice">
-    <div class="card" id="filterCard">
-      <h1 class="page">Practice by topic</h1>
-      <p class="lede small" id="practiceBlurb"></p>
-      <div class="chips" id="topicChips"></div>
-      <div class="chips hidden" id="formatChips"></div>
-      <div class="tools">
-        <button class="btn primary" id="newQ">New question</button>
-        <button class="btn" id="sameQ" title="Same question type, new numbers">Same type, new numbers</button>
-        <span class="small muted">Shortcuts: <kbd>g</kbd> method · <kbd>Enter</kbd> check · <kbd>1</kbd>–<kbd>5</kbd> choose · <kbd>n</kbd> next · <kbd>?</kbd> reference</span>
-      </div>
+    <div class="filterbar">
+      <div class="menu" id="topicMenu"></div>
+      <div class="menu hidden" id="formatMenu"></div>
     </div>
     <div id="qhost"></div>
   </section>
@@ -77,10 +70,9 @@
 
   <!-- ============ DRILL ============ -->
   <section id="view-drill" class="hidden">
-    <div class="card">
-      <h1 class="page">Rapid drill</h1>
-      <p class="lede small" id="drillBlurb"></p>
-      <div class="chips" id="drillChips"></div>
+    <div class="filterbar">
+      <div class="menu" id="drillMenu"></div>
+      <span class="small muted" id="drillBlurb"></span>
     </div>
     <div class="card drillcard" id="drillCard"></div>
   </section>
@@ -122,11 +114,15 @@
   </div>
   <p class="small muted" id="cheatBlurb"></p>
   <div id="cheatBody"></div>
+  <h3>Keyboard</h3>
+  <p class="small muted">Practice: <kbd>n</kbd> next · <kbd>g</kbd> method · <kbd>c</kbd> copy for AI · <kbd>1</kbd>–<kbd>9</kbd> choose · <kbd>Enter</kbd> check.
+    Drill: <kbd>space</kbd> flip · <kbd>1</kbd> got it · <kbd>2</kbd> missed it. Anywhere: <kbd>?</kbd> this panel · <kbd>Esc</kbd> close.</p>
 </aside>
 
 <script src="js/stats.js"></script>
 <script src="js/finite.js"></script>
 <script src="js/subjects.js"></script>
+<script src="js/mips.js"></script>
 <!-- subject modules: add one line per subject -->
 <script src="js/subjects/math2859.js"></script>
 <script src="js/subjects/math2400.js"></script>
@@ -139,7 +135,11 @@
 <script src="js/subjects/comp2511-code.js"></script>
 <script src="js/subjects/comp2511-practice.js"></script>
 <script src="js/subjects/comp2511-labs.js"></script>
+<script src="js/subjects/comp2511-exam.js"></script>
 <script src="js/subjects/comp2511.js"></script>
+<script src="js/subjects/comp1521-mips.js"></script>
+<script src="js/subjects/comp1521-c.js"></script>
+<script src="js/subjects/comp1521.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

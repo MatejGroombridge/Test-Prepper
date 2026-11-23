@@ -45,16 +45,25 @@
     var b = progress[bucket];
     if (!b[key]) b[key] = { attempted: 0, correct: 0, marks: 0, marksAvail: 0 };
     b[key].attempted++; b[key].marksAvail += marksAvail;
-    if (correct) { b[key].correct++; b[key].marks += marks; }
+    if (correct) b[key].correct++;
+    b[key].marks += marks;
+  }
+  /* Marks a settled part earned: all or nothing, unless it carries a score
+     (the fraction of autotests passed). */
+  function earned(part, correct, score) {
+    var m = part.marks || 0;
+    if (score !== undefined && score !== null) return Math.round(m * score * 2) / 2;
+    return correct ? m : 0;
   }
   /* A part may carry its own topic/template (a mock-test section that mixes
      topics), so its result is filed where it belongs. */
-  function record(question, part, correct) {
-    var m = part.marks || 0;
-    bump('topics', part.topic || question.topic, correct, m, m);
-    bump('templates', part.tpl || question.id, correct, m, m);
+  function record(question, part, correct, score) {
+    var m = part.marks || 0, got = earned(part, correct, score);
+    bump('topics', part.topic || question.topic, correct, got, m);
+    bump('templates', part.tpl || question.id, correct, got, m);
     progress.totals.attempted++; progress.totals.marksAvail += m;
-    if (correct) { progress.totals.correct++; progress.totals.marks += m; }
+    if (correct) progress.totals.correct++;
+    progress.totals.marks += got;
     save();
   }
 
@@ -332,10 +341,14 @@
     opts = opts || {};
     var node = el('div', 'part');
     node._part = part;
-    var head = el('div', 'plabel');
-    head.appendChild(el('b', '', part.label || ''));
-    if (part.marks) head.appendChild(el('span', 'marks', '[' + part.marks + ' mark' + (part.marks > 1 ? 's' : '') + ']'));
-    node.appendChild(head);
+    // a lone unlabelled part repeats the question's own marks pill, so skip it
+    var lone = q.parts.length === 1 && !part.label;
+    if (!lone) {
+      var head = el('div', 'plabel');
+      head.appendChild(el('b', '', part.label || ''));
+      if (part.marks) head.appendChild(el('span', 'marks', '[' + part.marks + ' mark' + (part.marks > 1 ? 's' : '') + ']'));
+      node.appendChild(head);
+    }
     node.appendChild(el('div', 'prompt', part.prompt));
 
     var fb = el('div', 'fb hidden');
@@ -344,7 +357,7 @@
     /* `noRecord` is set when the student revealed an answer they never
        attempted while practising: it should teach, not count against them.
        In a mock test an unattempted part is still a lost mark. */
-    function settle(ok, html, cls, noRecord) {
+    function settle(ok, html, cls, noRecord, score) {
       fb.className = 'fb ' + (cls || (ok ? 'ok' : 'bad'));
       fb.innerHTML = html;
       fb.classList.remove('hidden');
@@ -352,8 +365,9 @@
       if (!answered) {
         answered = true;
         node._correct = !!ok;
+        node._score = score;
         node._skipped = !!noRecord;
-        if (!opts.exam && !noRecord) record(q, part, ok);
+        if (!opts.exam && !noRecord) record(q, part, ok, score);
         if (opts.onAnswer) opts.onAnswer();
         if (node._onSettle) node._onSettle(!!ok);
       }
@@ -603,6 +617,104 @@
       node._reveal = function () { checkM(!Object.keys(picked).some(function (k) { return picked[k]; }) && !opts.exam); };
       node.appendChild(buildTools(part, node, opts.exam ? null : function () { checkM(false); }, fb, opts));
 
+    /* ---- mips — a program run against autotests in the browser ---- */
+    } else if (part.kind === 'mips') {
+      node.appendChild(el('div', 'langtag filetag', part.file || 'MIPS'));
+      var code = el('textarea', 'ans codearea');
+      code.value = part.prefill || '';
+      node._prefill = part.prefill || '';
+      code.setAttribute('spellcheck', 'false');
+      code.setAttribute('autocapitalize', 'off');
+      code.setAttribute('autocorrect', 'off');
+      code.rows = part.rows || 18;
+      code.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Tab') {
+          ev.preventDefault();
+          var st = code.selectionStart, en = code.selectionEnd;
+          code.value = code.value.slice(0, st) + '    ' + code.value.slice(en);
+          code.selectionStart = code.selectionEnd = st + 4;
+        }
+      });
+      node.appendChild(code);
+      node._answerText = function () { return code.value; };
+
+      var runBox = el('div', 'runbox');
+      var stdinTa = el('textarea', 'ans stdin');
+      stdinTa.rows = 3;
+      stdinTa.placeholder = 'Input (stdin), one value per line';
+      stdinTa.setAttribute('spellcheck', 'false');
+      if (part.tests && part.tests[0]) stdinTa.value = part.tests[0].stdin;
+      var runOut = el('pre', 'runout hidden');
+      var testOut = el('div', 'testout hidden');
+      var runTools = el('div', 'tools');
+      var runBtn = el('button', 'btn sm', 'Run');
+      var testBtn = el('button', 'btn sm', 'Run autotests');
+      runTools.appendChild(runBtn);
+      runTools.appendChild(testBtn);
+      runTools.appendChild(el('span', 'small muted', 'Runs in a mipsy-style simulator in your browser.'));
+      runBox.appendChild(el('div', 'small muted runlbl', 'Input'));
+      runBox.appendChild(stdinTa);
+      runBox.appendChild(runTools);
+      runBox.appendChild(runOut);
+      runBox.appendChild(testOut);
+      node.appendChild(runBox);
+
+      runBtn.onclick = function () {
+        var res = window.Mips.run(code.value, stdinTa.value);
+        runOut.classList.remove('hidden');
+        runOut.className = 'runout' + (res.error ? ' err' : '');
+        runOut.textContent = res.stdout + (res.error ? (res.stdout && !/\n$/.test(res.stdout) ? '\n' : '') + res.error : '') ||
+          '(no output)';
+      };
+      var showTests = function (results, label) {
+        var passed = results.filter(function (r) { return r.pass; }).length;
+        var html = '<div class="testsum"><b>' + label + ': ' + passed + ' of ' + results.length + ' passed</b></div>';
+        results.forEach(function (r, i) {
+          var inp = r.stdin ? esc(r.stdin.replace(/\n$/, '').split('\n').join(' ')) : '(none)';
+          html += '<div class="trow ' + (r.pass ? 'pass' : 'fail') + '"><span class="tmark">' + (r.pass ? '✓' : '✗') + '</span>' +
+            '<span class="tname">Test ' + (i + 1) + (r.hidden ? ' (unseen)' : '') + '</span><span class="tin">input: <code>' + inp + '</code></span>';
+          if (!r.pass) {
+            html += '<div class="tdiff"><div><span class="small muted">Expected</span><pre>' + esc(r.expected) + '</pre></div>' +
+              '<div><span class="small muted">Got</span><pre>' + esc(r.got) + (r.error ? '\n<span class="terr">' + esc(r.error) + '</span>' : '') + '</pre></div></div>' +
+              (r.near ? '<div class="small">Only whitespace differs (a newline or space): a small penalty, not zero.</div>' : '');
+          }
+          html += '</div>';
+        });
+        return { html: html, passed: passed };
+      };
+      testBtn.onclick = function () {
+        var res = window.Mips.test(code.value, part.tests || []);
+        testOut.classList.remove('hidden');
+        testOut.innerHTML = showTests(res, 'Autotests').html +
+          (part.hidden && part.hidden.length ? '<div class="small muted">Marking also runs ' + part.hidden.length + ' unseen test' + (part.hidden.length > 1 ? 's' : '') + ', as the real automarker does.</div>' : '');
+      };
+
+      var mipsAttempted = function () {
+        var v = code.value.trim();
+        return !!v && v !== (part.prefill || '').trim();
+      };
+      var markMips = function (practiceReveal) {
+        if (answered) return;
+        var all = (part.tests || []).map(function (t) { return { stdin: t.stdin, stdout: t.stdout }; })
+          .concat((part.hidden || []).map(function (t) { return { stdin: t.stdin, stdout: t.stdout, hidden: true }; }));
+        var tried = mipsAttempted();
+        var res = tried ? window.Mips.test(code.value, all) : [];
+        res.forEach(function (r, i) { r.hidden = !!all[i].hidden; });
+        var sum = tried ? showTests(res, 'All tests') : { html: '<b>No attempt.</b>', passed: 0 };
+        var score = all.length ? sum.passed / all.length : 0;
+        var ok = tried && sum.passed === all.length;
+        code.readOnly = true;
+        var html = sum.html;
+        if (tried && !ok) html += '<div class="small" style="margin-top:6px">Scored on the fraction of tests passed. The real exam hand-marks failing answers, so a near-miss can earn more, but less than a third of a solution earns nothing.</div>';
+        html += '<div style="margin-top:10px"><b>Sample answer</b><pre class="sample">' + esc(part.model) + '</pre></div>';
+        if (part.notes) html += '<div class="sol small">' + part.notes + '</div>';
+        if (part.checklist) html += '<div class="small" style="margin-top:8px"><b>A marker also checks:</b><ul class="checklist">' +
+          part.checklist.map(function (c) { return '<li>' + c + '</li>'; }).join('') + '</ul></div>';
+        settle(ok, html, ok ? 'ok' : (tried ? 'bad' : 'info'), practiceReveal && !tried && !opts.exam, tried ? score : 0);
+      };
+      node._reveal = function () { markMips(true); };
+      node.appendChild(buildTools(part, node, function () { markMips(false); }, fb, opts, false, 'Mark it'));
+
     /* ---- written / code — both self-assessed against a sample answer ---- */
     } else if (part.kind === 'written' || part.kind === 'code') {
       var isCode = part.kind === 'code';
@@ -710,7 +822,7 @@
       tools.appendChild(h);
     }
     // written/code parts already reveal the sample via their own button
-    if (!opts.exam && node._reveal && part.kind !== 'written' && part.kind !== 'code') {
+    if (!opts.exam && node._reveal && part.kind !== 'written' && part.kind !== 'code' && part.kind !== 'mips') {
       var r = el('button', 'btn sm ghost', 'Show answer');
       r.onclick = function () { node._reveal(); };
       tools.appendChild(r);
@@ -808,7 +920,7 @@
     var card = el('div', 'card');
     var head = el('div', 'qhead');
     head.appendChild(el('h2', '', q.title));
-    head.appendChild(el('span', 'pill', q.topic));
+    if (q.title.toLowerCase().indexOf(q.topic.toLowerCase()) !== 0) head.appendChild(el('span', 'pill', q.topic));
     head.appendChild(el('span', 'pill grey', q.marks + (q.marks === 1 ? ' mark' : ' marks')));
     card.appendChild(head);
     /* The method guide is teaching material, so it is hidden during a mock test
@@ -894,7 +1006,7 @@
     var done = 0, ok = 0, marks = 0, avail = 0;
     nodes.forEach(function (n) {
       avail += n._part.marks || 0;
-      if (n._correct !== undefined) { done++; if (n._correct) { ok++; marks += n._part.marks || 0; } }
+      if (n._correct !== undefined) { done++; if (n._correct) ok++; marks += earned(n._part, n._correct, n._score); }
     });
     $('#footScore').innerHTML = 'This question: <b>' + ok + '/' + done + '</b> parts correct' +
       (done ? ' · <b>' + marks + '/' + avail + '</b> marks' : '') +
@@ -1011,8 +1123,9 @@
           };
           return;
         }
-        if (n._correct) { sc.ok++; sc.marks += n._part.marks || 0; }
-        record(q, n._part, !!n._correct);
+        if (n._correct) sc.ok++;
+        sc.marks += earned(n._part, n._correct, n._score);
+        record(q, n._part, !!n._correct, n._score);
       });
       card.classList.add('review');
     });
@@ -1052,20 +1165,10 @@
   }
   function initDrill() {
     drill.sets = {}; drill.queue = []; drill.current = null; drill.flipped = false;
-    var host = $('#drillChips');
-    host.innerHTML = '';
-    (Q.drillSets || []).forEach(function (set) {
-      drill.sets[set.id] = true;
-      var c = el('button', 'chip on', set.label);
-      c.onclick = function () {
-        drill.sets[set.id] = !drill.sets[set.id];
-        c.classList.toggle('on', drill.sets[set.id]);
-        drill.queue = []; nextDrill();
-      };
-      host.appendChild(c);
-    });
-    $('#drillBlurb').textContent = (Q.drillBlurb || 'Rapid recall.') +
-      ' Space to flip, 1 got it, 2 missed it.';
+    filterMenu($('#drillMenu'), 'sets',
+      (Q.drillSets || []).map(function (s) { return { key: s.id, label: s.label }; }),
+      drill.sets, function () { drill.queue = []; nextDrill(); });
+    $('#drillBlurb').textContent = Q.drillBlurb || 'Rapid recall.';
   }
   function nextDrill() {
     if (!drill.queue.length) {
@@ -1084,10 +1187,10 @@
       html += '<div class="drilla">' + d.a + '</div>';
       if (d.alt) html += '<div class="drillpy">' + (d.altLabel || 'Python') + ': ' + d.alt + '</div>';
       html += '<div class="tools" style="justify-content:center;margin-top:20px">' +
-        '<button class="btn" id="dGot">1 · Got it</button>' +
-        '<button class="btn" id="dMiss">2 · Missed it</button></div>';
+        '<button class="btn" id="dGot">Got it</button>' +
+        '<button class="btn" id="dMiss">Missed it</button></div>';
     } else {
-      html += '<div class="tools" style="justify-content:center"><button class="btn primary" id="dFlip">Show answer <kbd>space</kbd></button></div>';
+      html += '<div class="tools" style="justify-content:center"><button class="btn primary" id="dFlip">Show answer</button></div>';
     }
     c.innerHTML = html;
     if (drill.flipped) {
@@ -1195,9 +1298,6 @@
     $('#footbar').classList.add('hidden');
 
     $('#brandCode').textContent = Q.code;
-    $('#practiceBlurb').textContent = Q.tagline || '';
-    $('#sameQ').textContent = label('same', 'Same type, new numbers');
-    $('#sameQ').title = label('same', 'Same question type, new numbers');
     document.title = Q.code + ' Practice';
 
     // a subject with a fixed test format builds its own paper
@@ -1228,7 +1328,9 @@
       sel.appendChild(o);
     });
     // With a single subject the picker is noise; keep the code in the header only.
+    // With several, the picker already names the subject, so the brand doesn't.
     $('#subjectWrap').classList.toggle('hidden', all.length < 2);
+    $('.brand').classList.toggle('multi', all.length >= 2);
     sel.onchange = function () { setSubject(sel.value); };
   }
 
@@ -1248,39 +1350,115 @@
 
   /* ================= init ================= */
 
-  /* One toggle chip per name; at least one chip in a row always stays on. */
-  function chipRow(host, names, store) {
-    names.forEach(function (t) {
-      store[t] = true;
-      var c = el('button', 'chip on', t);
-      c.onclick = function () {
-        store[t] = !store[t];
-        c.classList.toggle('on', store[t]);
-        if (!Object.keys(store).some(function (k) { return store[k]; })) {
-          store[t] = true; c.classList.add('on');
-        }
+  /* A dropdown of checkboxes. `items` are {key, label}; every item starts on
+     and at least one always stays on. `onChange` runs after each toggle, and
+     `onClose` runs when the menu closes having changed something. */
+  function closeMenus(except) {
+    $$('.menu.open').forEach(function (m) { if (m !== except) m._close(); });
+  }
+
+  function filterMenu(host, noun, items, store, onChange, onClose) {
+    host.innerHTML = '';
+    host.classList.remove('open');
+    items.forEach(function (it) { store[it.key] = true; });
+    var btn = el('button', 'menubtn');
+    btn.type = 'button';
+    btn.setAttribute('aria-haspopup', 'true');
+    btn.setAttribute('aria-expanded', 'false');
+    var pop = el('div', 'menupop');
+    var dirty = false;
+
+    var summary = function () {
+      var on = items.filter(function (it) { return store[it.key]; });
+      var text = on.length === items.length ? 'All ' + noun
+        : on.length === 1 ? on[0].label
+        : on.length + ' of ' + items.length + ' ' + noun;
+      btn.innerHTML = '<span class="menulbl">' + noun.charAt(0).toUpperCase() + noun.slice(1) +
+        '</span><span class="menuval">' + text + '</span><span class="caret" aria-hidden="true"></span>';
+      btn.classList.toggle('filtered', on.length < items.length);
+    };
+    var boxes = [];
+    var sync = function () {
+      boxes.forEach(function (b) { b.checked = !!store[b._key]; });
+      summary();
+      dirty = true;
+      if (onChange) onChange();
+    };
+
+    var head = el('div', 'menuhead');
+    var allBtn = el('button', 'linkbtn', 'Select all');
+    allBtn.type = 'button';
+    allBtn.onclick = function () { items.forEach(function (it) { store[it.key] = true; }); sync(); };
+    head.appendChild(allBtn);
+    pop.appendChild(head);
+
+    items.forEach(function (it) {
+      var row = el('label', 'menurow');
+      var cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.checked = true; cb._key = it.key;
+      cb.onchange = function () {
+        store[it.key] = cb.checked;
+        if (!items.some(function (x) { return store[x.key]; })) store[it.key] = true;
+        sync();
       };
-      host.appendChild(c);
+      boxes.push(cb);
+      row.appendChild(cb);
+      row.appendChild(el('span', 'menutext', it.label));
+      var only = el('button', 'linkbtn only', 'only');
+      only.type = 'button';
+      only.title = 'Show only ' + it.label;
+      only.onclick = function (e) {
+        e.preventDefault();
+        items.forEach(function (x) { store[x.key] = x.key === it.key; });
+        sync();
+      };
+      row.appendChild(only);
+      pop.appendChild(row);
     });
+
+    host._close = function () {
+      if (!host.classList.contains('open')) return;
+      host.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+      if (dirty && onClose) onClose();
+      dirty = false;
+    };
+    btn.onclick = function () {
+      if (host.classList.contains('open')) { host._close(); return; }
+      closeMenus(host);
+      host.classList.add('open');
+      btn.setAttribute('aria-expanded', 'true');
+    };
+    host.appendChild(btn);
+    host.appendChild(pop);
+    summary();
+  }
+
+  /* After the filters change, swap the question only if it no longer fits. */
+  function refreshIfFiltered() {
+    if (state.mode !== 'practice' || !state.current) return;
+    var id = state.current.question.id;
+    if (!enabledTemplates().some(function (t) { return t.id === id; })) newQuestion(false);
   }
 
   function initTopics() {
-    var host = $('#topicChips');
-    host.innerHTML = '';
     state.topics = {};
-    chipRow(host, allTopics(), state.topics);
+    filterMenu($('#topicMenu'), 'topics',
+      allTopics().map(function (t) { return { key: t, label: t }; }),
+      state.topics, null, refreshIfFiltered);
 
-    // a second row when the subject tags its templates with a format
+    // a second menu when the subject tags its templates with a format
     var formats = [];
     Q.templates.forEach(function (tp) { if (tp.format && formats.indexOf(tp.format) < 0) formats.push(tp.format); });
-    var fhost = $('#formatChips');
+    var fhost = $('#formatMenu');
     fhost.innerHTML = '';
     state.formats = null;
     fhost.classList.toggle('hidden', formats.length < 2);
     if (formats.length >= 2) {
       state.formats = {};
-      fhost.appendChild(el('span', 'chiplbl', 'Format'));
-      chipRow(fhost, formats, state.formats);
+      filterMenu(fhost, 'formats',
+        formats.map(function (f) { return { key: f, label: f }; }),
+        state.formats, null, refreshIfFiltered);
     }
   }
 
@@ -1293,8 +1471,9 @@
     initSubjectPicker();
 
     $$('#tabs button').forEach(function (b) { b.onclick = function () { setMode(b.dataset.mode); }; });
-    $('#newQ').onclick = function () { newQuestion(false); };
-    $('#sameQ').onclick = function () { newQuestion(true); };
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.menu')) closeMenus();
+    });
     $('#startTest').onclick = startTest;
     $('#resetStats').onclick = function () {
       if (confirm('Erase all recorded progress for ' + Q.code + '? Other subjects are not affected.')) {
@@ -1322,7 +1501,7 @@
     document.addEventListener('keydown', function (e) {
       var typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
       if (e.key === '?' && !typing) { e.preventDefault(); openDrawer(true); return; }
-      if (e.key === 'Escape') { openDrawer(false); return; }
+      if (e.key === 'Escape') { openDrawer(false); closeMenus(); return; }
       if (typing) return;
       if (state.mode === 'drill') {
         if (e.key === ' ') { e.preventDefault(); if (!drill.flipped) { drill.flipped = true; paintDrill(); } }

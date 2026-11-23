@@ -50,8 +50,8 @@ statistics engine, so marking is exact.
 - **Progress tracking** ranks your weakest topics. Revealing an answer you never
   attempted does *not* count against you.
 
-Keyboard: `Enter` check · `1`–`5` choose · `n` next question · `?` command reference ·
-`space` flip a drill card.
+Practice is filtered with the **Topics** and **Formats** dropdowns above the question.
+Keyboard shortcuts are listed at the bottom of the reference panel (`?`).
 
 ## Layout
 
@@ -60,6 +60,7 @@ index.html                 page shell
 css/style.css              styling (light and dark)
 js/stats.js                distributions and inference engine (verified against scipy)
 js/subjects.js             subject registry — load before any subject module
+js/mips.js                 mipsy-style MIPS assembler and simulator (runs COMP1521 MIPS answers)
 js/finite.js               number theory / finite field engine (verified vs sympy)
 js/subjects/math2859.js    MATH2859 templates, drills and reference
 js/subjects/math2400.js    MATH2400 templates, drills and reference
@@ -72,7 +73,11 @@ js/subjects/comp2511-written.js  COMP2511 short answers, architecture answers, s
 js/subjects/comp2511-code.js     COMP2511 domain models, refactoring and build-from-scratch problems
 js/subjects/comp2511-practice.js COMP2511 course practice questions and Week 10 tutorial (MCQ, short, architecture)
 js/subjects/comp2511-labs.js     COMP2511 course exercises: TMS, Airline, Shopping, Barbie, Engineering, Gardening, Shipping, Business rules
+js/subjects/comp2511-exam.js     COMP2511 harder exam-style set across all four sections
 js/subjects/comp2511.js    COMP2511 primers, templates, mock exam, drills, reference
+js/subjects/comp1521-mips.js  COMP1521 MIPS questions: starters, sample answers, test inputs
+js/subjects/comp1521-c.js     COMP1521 C questions: provided files, examples, sample answers
+js/subjects/comp1521.js       COMP1521 templates, mock exam, primers, drills, reference
 js/subjects/_template.js   annotated starting point for a new subject (not loaded)
 js/app.js                  UI, marking, progress — subject-agnostic
 ```
@@ -100,7 +105,7 @@ sample-question handout.
   dot-point model answer laid out as an essay plan, and a checklist of what a marker
   looks for. The handout asks for prose, not bullet points: the dot points are for
   learning and planning.
-- **Format chips** filter practice to core multiple choice, hard multiple choice or
+- **The Formats menu** filters practice to core multiple choice, hard multiple choice or
   extended response.
 - **Topic primer** (`g`) on every question: summary, key claims, the argument step by
   step, and common confusions.
@@ -173,29 +178,35 @@ The **mock exam** follows the real paper’s shape: 3 hours, 100 marks.
 
 The banks:
 
-- **153 multiple-choice** across 11 topics: OO and polymorphism (overloading vs
+- **189 multiple-choice** across 11 topics: OO and polymorphism (overloading vs
   overriding, static and field hiding, equals/hashCode), design by contract and LSP,
   SOLID and the Law of Demeter, exceptions/generics/JUnit, functional interfaces and
   streams, code smells, the six patterns in the course (Strategy, Composite, Observer,
   Decorator, Factory, Singleton), concurrency, domain modelling, architecture
   characteristics/ADRs/C4/Mermaid, and the five architectural styles.
-- **48 short answers** in the Section 2 style: "is this valid inheritance?", "what does
+- **60 short answers** in the Section 2 style: "is this valid inheritance?", "what does
   this print?", identify two smells and fix them, pick a pattern and map its roles.
-- **7 domain models** (airline, music streaming, hospital, library, gym, TMS, airline
-  schedules), each with a provided controller and a sample model with relationship and
+- **9 domain models** (airline, music streaming, hospital, library, gym, TMS, airline
+  schedules, food delivery with combo menus, conference with workshop waitlists), each with a provided controller and a sample model with relationship and
   cardinality comments.
-- **9 refactoring problems**: five of ours (Decorator, Observer, Strategy, Composite,
+- **11 refactoring problems**: five of ours (Decorator, Observer, Strategy, Composite,
   Abstract Factory) with starter code and tests, plus the course’s Shopping refactor
   (Strategy), Barbie (Decorator), Engineering (four named smells) and Gardening (LSP,
-  Law of Demeter, Factory).
-- **6 build-from-scratch problems** with tests, in three parts like the sample exam’s
+  Law of Demeter, Factory), and two harder ones: course prerequisites (Composite) and
+  loyalty tiers (Strategy, with tiers that change at runtime).
+- **8 build-from-scratch problems** with tests, in three parts like the sample exam’s
   VSLite question, including the course’s Shipping discounts (Decorator) and Business
-  rules (Composite + JSON factory).
-- **24 architecture questions** and **9 Mermaid sequence diagrams** with sample
+  rules (Composite + JSON factory), plus role-based access control (Composite with cycle
+  rejection) and a live spreadsheet (Observer chains with a change log).
+- **29 architecture questions** and **12 Mermaid sequence diagrams** with sample
   diagrams and a marker’s checklist.
 
 Questions taken from the course show a **Source** line (sample exam, course practice
-questions, Week 10 tutorial, course exercises); unmarked ones are ours. The course
+questions, Week 10 tutorial, course exercises); unmarked ones are ours. Questions marked
+**harder exam-style set** aim above the sample exam: subtle dispatch and generics traces,
+contracts with invariants, pattern pitfalls (cycles, re-entrant notification, identity),
+concurrency bugs, design evaluation in Section 4, and Section 3 problems with a real
+edge case. Their Java sample answers compile and pass their tests on JDK 21. The course
 publishes no model answers for its short-answer practice questions or exercises, so
 those sample answers are ours. The course exercises come with starter code we did not
 have: the code in those questions is **reconstructed** to fit the spec and says so, so
@@ -214,6 +225,63 @@ Mermaid syntax sheet complete it. The banks are new questions in the sample exam
 style; two deliberately build on sample-exam scenarios with a twist (the library
 sequence diagram adds a reservation queue, and the e-commerce scaling question asks you
 to evaluate a migration plan).
+
+## COMP1521 Computer Systems Fundamentals — final exam
+
+Built from the 26T2 exam format (10 practical questions in 3 hours, easiest first,
+marks not equal, each answer a `.c` or `.s` file, autotested with unseen tests and
+hand-checked against each question's restrictions) and the 20T2 final you were given.
+The **mock exam** has 10 questions in the 20T2 paper's order, one from each topic:
+
+| Q | Topic | Language | Mock marks |
+|---|---|---|---|
+| 1 | Basics: read, compute, print, if/else | MIPS | 6 |
+| 2 | Bitwise functions with a provided test file | C | 7 |
+| 3 | Bits and conditions | MIPS | 8 |
+| 4 | Loops | MIPS | 9 |
+| 5 | Arguments, environment, `stat` | C | 10 |
+| 6 | Files and bytes (`fgetc`, `fseek`, binary data) | C | 10 |
+| 7 | Arrays, strings, 2D arrays | MIPS | 11 |
+| 8 | UTF-8, IEEE 754 floats, two's complement | C | 12 |
+| 9 | Functions, the calling convention, recursion | MIPS | 13 |
+| 10 | Directory trees, `posix_spawn` + pipes, pthreads | C | 14 |
+
+The real paper's marks per question are not published; the mock weights later
+questions more, totalling 100.
+
+**60 questions**: 29 MIPS and 31 C, including all nine 20T2 questions (marked
+**Source: 20T2 final**, also available on their own as the *20T2 past paper* topic).
+
+**MIPS answers run in the browser.** `js/mips.js` is a small mipsy-style assembler and
+simulator: the syscalls the course uses (1, 4, 5, 8, 9, 10, 11, 12), the pseudo-
+instructions (`li`, `la`, `blt`, three-operand `mul`/`div`/`rem`, immediates as third
+operands), constants (`N = 10`, `.space 4 * N`), and mipsy's errors: using an
+uninitialised register or memory, overflow in `add`/`addi`/`sub`, unaligned accesses,
+falling off the end of `main`. Each MIPS question has **Run** (your own input),
+**Run autotests** (the examples, like `1521 autotest`) and **Mark it** (the examples
+plus unseen tests; you score the fraction passed). In the mock, autotests work during
+the test and everything is marked on submit. It is a close approximation of mipsy, not
+mipsy itself, so check final answers on CSE.
+
+**C answers are self-assessed.** The app can't compile C: write it, build it with `dcc`
+on CSE, test it, then compare with the sample answer and the marker's checklist
+(restrictions such as "no `/`, `*` or `%`" or "must use `fseek`").
+
+Every question has a C reference or the exact provided files, an examples transcript in
+the exam's format, restrictions, a sample answer and notes on the trap it tests.
+Each topic has a **primer** (method, worked example, where marks are lost) with the
+syscall, register, permission-bit, `fseek`, UTF-8 and IEEE 754 tables. Four drill sets
+(MIPS, bits and representation, C files and system calls, UTF-8 and floats) and a
+reference drawer complete it.
+
+How the answers were checked: every MIPS sample answer passes all its tests (216 in
+total) in the simulator, against expected output computed independently in JavaScript
+from the C program. Every MIPS starter fails them. The C sample answers could not be
+compiled here (no C compiler on this machine). Their bit-level logic (parity, byte and
+bit reversal, rotation, sign extension, two's complement, UTF-8 encode, decode, count
+and reverse) was ported line by line to Python and matched against independent
+references on thousands of random inputs. The float examples were checked against
+Python's `struct`.
 
 ## Adding a subject
 
