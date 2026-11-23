@@ -288,7 +288,22 @@
       if (seg !== 'text') throw new MipsError('instruction "' + op + '" found in the .data section', lineNo);
       pendingLabels.forEach(function (l) { labels[l] = TEXT_BASE + instrs.length * 4; });
       pendingLabels = [];
-      instrs.push({ op: op, args: splitOperands(rest), line: lineNo });
+      var args = splitOperands(rest);
+      // mipsy's stack pseudo-instructions, expanded into the instructions they stand for
+      var STACK_ARGS = { push: 1, pop: 1, begin: 0, end: 0 };
+      if (STACK_ARGS[op] !== undefined) {
+        var want = STACK_ARGS[op];
+        if (args.length !== want) throw new MipsError(op + ' expects ' + want + ' operand' + (want === 1 ? '' : 's') + ', got ' + args.length, lineNo);
+        var seq = {
+          push:  [['addiu', '$sp', '$sp', '-4'], ['sw', args[0], '0($sp)']],
+          pop:   [['lw', args[0], '0($sp)'], ['addiu', '$sp', '$sp', '4']],
+          begin: [['addiu', '$sp', '$sp', '-4'], ['sw', '$fp', '0($sp)'], ['move', '$fp', '$sp']],
+          end:   [['move', '$sp', '$fp'], ['lw', '$fp', '0($sp)'], ['addiu', '$sp', '$sp', '4']]
+        }[op];
+        seq.forEach(function (x) { instrs.push({ op: x[0], args: x.slice(1), line: lineNo }); });
+        return;
+      }
+      instrs.push({ op: op, args: args, line: lineNo });
     });
     pendingLabels.forEach(function (l) { labels[l] = seg === 'data' ? dataPtr : TEXT_BASE + instrs.length * 4; });
 

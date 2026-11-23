@@ -295,17 +295,18 @@
     q9: {
       idea: 'Functions follow the calling convention: arguments in $a0–$a3, result in $v0, and anything you need after a ' + c('jal') + ' must be in a saved ($s) register or on the stack.',
       steps: [
-        'Prologue: ' + c('addi $sp, $sp, -N') + ', then ' + c('sw $ra') + ' and every $s register you will use.',
+        'Prologue (label it ' + c('f__prologue') + '): ' + c('begin') + ', then ' + c('push $ra') + ' and ' + c('push') + ' every $s register you will use.',
         'Copy arguments you need later into $s registers (they survive calls; $a and $t do not).',
         'Call: set $a0…, ' + c('jal f') + ', result in $v0.',
-        'Epilogue (one exit label, so every path restores): ' + c('lw') + ' them back, ' + c('addi $sp, $sp, N') + ', ' + c('jr $ra') + '.',
-        'A leaf function (calls nothing) needs no frame and can use $t registers. main calls things, so main saves $ra.'
+        'Epilogue (' + c('f__epilogue') + ', the one exit every path branches to): ' + c('pop') + ' them in reverse order, ' + c('end') + ', ' + c('jr $ra') + '.',
+        'A leaf function (calls nothing) needs no frame and can use $t registers. main calls things, so main saves $ra.',
+        'mipsy expands these: ' + c('push $r') + ' = ' + c('addi $sp, $sp, -4; sw $r, ($sp)') + ', ' + c('pop $r') + ' = ' + c('lw $r, ($sp); addi $sp, $sp, 4') + '; ' + c('begin') + ' saves $fp and points it at the frame, ' + c('end') + ' resets $sp from $fp and restores $fp.'
       ],
       sections: [{ title: 'Registers and the calling convention', html: REGS }],
-      worked: pre('# int sum_to(int n) { if (n == 0) return 0; return n + sum_to(n - 1); }\nsum_to:\n    addi $sp, $sp, -8\n    sw   $ra, 4($sp)\n    sw   $s0, 0($sp)\n    move $s0, $a0          # n is needed after the call\n    li   $v0, 0\n    beqz $s0, sum_to_ret\n    addi $a0, $s0, -1\n    jal  sum_to\n    add  $v0, $v0, $s0\nsum_to_ret:\n    lw   $s0, 0($sp)\n    lw   $ra, 4($sp)\n    addi $sp, $sp, 8\n    jr   $ra'),
+      worked: pre('# int sum_to(int n) { if (n == 0) return 0; return n + sum_to(n - 1); }\nsum_to:\nsum_to__prologue:\n    begin\n    push $ra\n    push $s0\nsum_to__body:\n    move $s0, $a0          # n is needed after the call\n    li   $v0, 0\n    beqz $s0, sum_to__epilogue\n    addi $a0, $s0, -1\n    jal  sum_to\n    add  $v0, $v0, $s0\nsum_to__epilogue:\n    pop  $s0\n    pop  $ra\n    end\n    jr   $ra'),
       traps: [
         'Keeping a value in $t0 across a jal: it works until the callee uses $t0.',
-        'Returning early without restoring $sp and $ra: use a single exit label.',
+        'Returning with jr before the epilogue, or popping in the wrong order (registers come back swapped). Branch to the one epilogue and pop in reverse push order.',
         'Using a $s register without saving it: the caller\'s value is destroyed (the provided mains check this).',
         'Ignoring "must be recursive" or "must call is_prime": autotests pass, the human marker gives 0.'
       ]
@@ -409,8 +410,9 @@
     { q: 'Offset of m[r][c] in int m[R][C]', a: '(r × C + c) × 4', tag: 'Memory' },
     { q: 'Reserve space for int a[100]', a: 'a: .space 400', tag: 'Memory' },
     { q: 'Unsigned vs signed byte load', a: 'lbu zero-extends (0..255); lb sign-extends (−128..127)', tag: 'Memory' },
-    { q: 'Function prologue saving $ra and $s0', a: 'addi $sp, $sp, -8 · sw $ra, 4($sp) · sw $s0, 0($sp)', tag: 'Functions' },
-    { q: 'Matching epilogue', a: 'lw $s0, 0($sp) · lw $ra, 4($sp) · addi $sp, $sp, 8 · jr $ra', tag: 'Functions' },
+    { q: 'Function prologue saving $ra and $s0', a: 'begin · push $ra · push $s0', alt: 'addi $sp, $sp, -8 · sw $ra, 4($sp) · sw $s0, 0($sp)', altLabel: 'without pseudo-instructions', tag: 'Functions' },
+    { q: 'Matching epilogue', a: 'pop $s0 · pop $ra · end · jr $ra', alt: 'lw $s0, 0($sp) · lw $ra, 4($sp) · addi $sp, $sp, 8 · jr $ra', altLabel: 'without pseudo-instructions', tag: 'Functions' },
+    { q: 'After push $ra, push $s0, push $s1: the epilogue pops in which order?', a: 'pop $s1 · pop $s0 · pop $ra (reverse: last in, first out)', tag: 'Functions' },
     { q: 'Which registers survive a jal?', a: '$s0–$s7, $sp (and $ra only if you saved it)', alt: '$t, $a, $v may all change', altLabel: 'not', tag: 'Functions' },
     { q: 'Why does main save $ra?', a: 'Every jal overwrites $ra; main needs it to return to the code that called main', tag: 'Functions' },
     { q: 'Leaf function', a: 'Calls nothing, so no stack frame needed and $t registers are fine', tag: 'Functions' }
@@ -514,7 +516,11 @@
         ] },
         { heading: 'Registers', rows: [
           ['$v0–$v1', 'results, syscall number'], ['$a0–$a3', 'arguments'], ['$t0–$t9', 'temporaries: not preserved by calls'],
-          ['$s0–$s7', 'saved: a function must restore any it uses'], ['$sp', 'stack pointer, grows down'], ['$ra', 'return address (set by jal)']
+          ['$s0–$s7', 'saved: a function must restore any it uses'], ['$sp', 'stack pointer, grows down'], ['$fp', 'frame pointer (set by begin, restored by end)'], ['$ra', 'return address (set by jal)']
+        ] },
+        { heading: 'Function frames (mipsy)', rows: [
+          ['f__prologue:', 'begin, then push $ra and each $s register used'], ['f__body:', 'the code; early exits branch to f__epilogue'],
+          ['f__epilogue:', 'pop in reverse order, end, jr $ra'], ['push $r / pop $r', 'addi $sp, $sp, -4 + sw $r, ($sp) / lw $r, ($sp) + addi $sp, $sp, 4']
         ] },
         { heading: 'C system calls & library', rows: [
           ['getenv / environ', 'environment variables'], ['stat / lstat', 'st_size, st_mode (S_ISDIR, S_ISREG, S_IRUSR…), st_mtime'],

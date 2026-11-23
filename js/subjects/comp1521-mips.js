@@ -1572,11 +1572,12 @@ close: .asciiz ") = "
 
     .text
 main:
-    addi $sp, $sp, -12      # save $ra, $s0, $s1
-    sw   $ra, 8($sp)
-    sw   $s0, 4($sp)
-    sw   $s1, 0($sp)
-
+main__prologue:
+    begin                   # save $ra, $s0, $s1
+    push $ra
+    push $s0
+    push $s1
+main__body:
     li   $v0, 5             # scanf("%d", &x);
     syscall
     move $s0, $v0
@@ -1611,10 +1612,11 @@ main:
     li   $v0, 11
     syscall
 
-    lw   $s1, 0($sp)
-    lw   $s0, 4($sp)
-    lw   $ra, 8($sp)
-    addi $sp, $sp, 12
+main__epilogue:
+    pop  $s1
+    pop  $s0
+    pop  $ra
+    end
     li   $v0, 0
     jr   $ra
 
@@ -1636,10 +1638,11 @@ msg: .asciiz " stairs: "
 
     .text
 main:
-    addi $sp, $sp, -8
-    sw   $ra, 4($sp)
-    sw   $s0, 0($sp)
-
+main__prologue:
+    begin
+    push $ra
+    push $s0
+main__body:
     li   $v0, 5             # scanf("%d", &n);
     syscall
     move $s0, $v0
@@ -1661,9 +1664,10 @@ main:
     li   $v0, 11
     syscall
 
-    lw   $s0, 0($sp)
-    lw   $ra, 4($sp)
-    addi $sp, $sp, 8
+main__epilogue:
+    pop  $s0
+    pop  $ra
+    end
     li   $v0, 0
     jr   $ra
 
@@ -1678,10 +1682,11 @@ msg:     .asciiz "max = "
 
     .text
 main:
-    addi $sp, $sp, -8
-    sw   $ra, 4($sp)
-    sw   $s0, 0($sp)
-
+main__prologue:
+    begin
+    push $ra
+    push $s0
+main__body:
     li   $v0, 5             # scanf("%d", &n);
     syscall
     move $s0, $v0
@@ -1711,9 +1716,10 @@ call:
     li   $v0, 11
     syscall
 
-    lw   $s0, 0($sp)
-    lw   $ra, 4($sp)
-    addi $sp, $sp, 8
+main__epilogue:
+    pop  $s0
+    pop  $ra
+    end
     li   $v0, 0
     jr   $ra
 
@@ -1750,34 +1756,35 @@ int main(void) {
       restrictions: ['power must be recursive, as in the C program.', 'You must follow the MIPS calling conventions: arguments in $a0/$a1, result in $v0, and $s registers and $ra preserved across calls.'],
       model: withFn(POWER_HEAD, POWER_MAIN, R`# power(x, n) — x in $a0, n in $a1, result in $v0
 power:
-    addi $sp, $sp, -12      # prologue: save $ra, $s0, $s1
-    sw   $ra, 8($sp)
-    sw   $s0, 4($sp)
-    sw   $s1, 0($sp)
-
+power__prologue:
+    begin                   # save $ra, $s0, $s1
+    push $ra
+    push $s0
+    push $s1
+power__body:
     move $s0, $a0           # x survives the recursive call in $s0
     move $s1, $a1           # n survives in $s1
 
     li   $v0, 1             # if (n == 0) return 1;
-    beqz $s1, power_return
+    beqz $s1, power__epilogue
 
     div  $a1, $s1, 2        # half = power(x, n / 2);   ($a0 is still x)
     jal  power
     mul  $v0, $v0, $v0      # half * half
 
     rem  $t0, $s1, 2        # if (n % 2 == 1) result *= x;
-    bne  $t0, 1, power_return
+    bne  $t0, 1, power__epilogue
     mul  $v0, $v0, $s0
 
-power_return:
-    lw   $s1, 0($sp)        # epilogue: restore and return
-    lw   $s0, 4($sp)
-    lw   $ra, 8($sp)
-    addi $sp, $sp, 12
+power__epilogue:
+    pop  $s1
+    pop  $s0
+    pop  $ra
+    end
     jr   $ra
 `),
-      notes: 'Anything needed <i>after</i> a <code>jal</code> must be in an <code>$s</code> register (saved in the prologue) or on the stack: <code>$t</code> and <code>$a</code> registers may be overwritten by the call. main keeps x and n in $s0/$s1, so a power that clobbers them without restoring prints the wrong header.',
-      check: ['Saves and restores $ra and every $s register it uses', 'Recursive, with the stack pointer restored on every return path']
+      notes: 'Anything needed <i>after</i> a <code>jal</code> must be in an <code>$s</code> register (saved in the prologue) or on the stack: <code>$t</code> and <code>$a</code> registers may be overwritten by the call. main keeps x and n in $s0/$s1, so a power that clobbers them without restoring prints the wrong header. Pop in the reverse order of the pushes: the stack is last in, first out.',
+      check: ['Saves and restores $ra and every $s register it uses', 'Recursive, and every return path goes through the epilogue: pop in the reverse order of the pushes, then end']
     },
     {
       id: 'm-ways', slot: 'q9', title: 'Climbing stairs, recursively', file: 'ways.s',
@@ -1808,16 +1815,17 @@ int main(void) {
       restrictions: ['ways must be recursive, as in the C program.', 'You must follow the MIPS calling conventions.'],
       model: withFn(WAYS_HEAD, WAYS_MAIN, R`# ways(n) — n in $a0, result in $v0
 ways:
-    addi $sp, $sp, -12      # save $ra, $s0 (n), $s1 (running total)
-    sw   $ra, 8($sp)
-    sw   $s0, 4($sp)
-    sw   $s1, 0($sp)
-
+ways__prologue:
+    begin                   # $s0 = n, $s1 = running total
+    push $ra
+    push $s0
+    push $s1
+ways__body:
     move $s0, $a0
     li   $v0, 0             # if (n < 0) return 0;
-    bltz $s0, ways_return
+    bltz $s0, ways__epilogue
     li   $v0, 1             # if (n == 0) return 1;
-    beqz $s0, ways_return
+    beqz $s0, ways__epilogue
 
     addi $a0, $s0, -1       # total = ways(n - 1);
     jal  ways
@@ -1829,15 +1837,15 @@ ways:
     jal  ways
     add  $v0, $s1, $v0      # return total;
 
-ways_return:
-    lw   $s1, 0($sp)
-    lw   $s0, 4($sp)
-    lw   $ra, 8($sp)
-    addi $sp, $sp, 12
+ways__epilogue:
+    pop  $s1
+    pop  $s0
+    pop  $ra
+    end
     jr   $ra
 `),
       notes: 'The running total must survive two more calls, so it lives in a saved register too. Keeping it in <code>$t0</code> works only by luck, and fails as soon as a call uses $t0.',
-      check: ['Partial sums are kept in saved registers or on the stack, not $t registers', 'Every return path restores $sp']
+      check: ['Partial sums are kept in saved registers or on the stack, not $t registers', 'Every return path branches to ways__epilogue rather than returning early with jr']
     },
     {
       id: 'm-maxrec', slot: 'q9', title: 'Recursive array maximum', file: 'max.s',
@@ -1874,16 +1882,17 @@ int main(void) {
       restrictions: ['max must be recursive and take the array address in $a0, as in the C program.', 'You must follow the MIPS calling conventions.'],
       model: withFn(MAX_HEAD, MAX_MAIN, R`# max(a, n) — array address in $a0, n in $a1, result in $v0
 max:
-    addi $sp, $sp, -12      # save $ra, $s0 (a), $s1 (n)
-    sw   $ra, 8($sp)
-    sw   $s0, 4($sp)
-    sw   $s1, 0($sp)
-
+max__prologue:
+    begin                   # $s0 = a, $s1 = n
+    push $ra
+    push $s0
+    push $s1
+max__body:
     move $s0, $a0
     move $s1, $a1
 
     lw   $v0, 0($s0)        # if (n == 1) return a[0];
-    beq  $s1, 1, max_return
+    beq  $s1, 1, max__epilogue
 
     addi $a1, $s1, -1       # rest = max(a, n - 1);   ($a0 is still a)
     jal  max
@@ -1892,14 +1901,14 @@ max:
     mul  $t0, $t0, 4
     add  $t0, $t0, $s0
     lw   $t1, ($t0)
-    ble  $t1, $v0, max_return   # if (a[n - 1] > rest) return a[n - 1];
+    ble  $t1, $v0, max__epilogue   # if (a[n - 1] > rest) return a[n - 1];
     move $v0, $t1
 
-max_return:
-    lw   $s1, 0($sp)
-    lw   $s0, 4($sp)
-    lw   $ra, 8($sp)
-    addi $sp, $sp, 12
+max__epilogue:
+    pop  $s1
+    pop  $s0
+    pop  $ra
+    end
     jr   $ra
 `),
       notes: 'The array is passed by address, so elements are loaded relative to <code>$a0</code> (saved in $s0), not by the label <code>numbers</code>. Hard-coding the label passes the tests but breaks the restriction, and a marker will see it.',
@@ -1948,12 +1957,13 @@ primes_msg: .asciiz " primes\n"
 
     .text
 main:
-    addi $sp, $sp, -16      # save $ra, $s0, $s1, $s2
-    sw   $ra, 12($sp)
-    sw   $s0, 8($sp)
-    sw   $s1, 4($sp)
-    sw   $s2, 0($sp)
-
+main__prologue:
+    begin                   # $s0 = limit, $s1 = count, $s2 = i
+    push $ra
+    push $s0
+    push $s1
+    push $s2
+main__body:
     li   $v0, 5             # scanf("%d", &limit);
     syscall
     move $s0, $v0           # limit
@@ -1982,11 +1992,12 @@ done:
     li   $v0, 4
     syscall
 
-    lw   $s2, 0($sp)
-    lw   $s1, 4($sp)
-    lw   $s0, 8($sp)
-    lw   $ra, 12($sp)
-    addi $sp, $sp, 16
+main__epilogue:
+    pop  $s2
+    pop  $s1
+    pop  $s0
+    pop  $ra
+    end
     li   $v0, 0
     jr   $ra
 
@@ -2063,17 +2074,18 @@ sorted: .word -20, -7, -3, 0, 2, 5, 8, 13, 21, 34, 40, 55, 61, 77, 89, 100
 
     .text
 main:
-    addi $sp, $sp, -12      # save $ra, $s0 (n), $s1 (i)
-    sw   $ra, 8($sp)
-    sw   $s0, 4($sp)
-    sw   $s1, 0($sp)
-
+main__prologue:
+    begin                   # $s0 = n, $s1 = i
+    push $ra
+    push $s0
+    push $s1
+main__body:
     li   $v0, 5             # scanf("%d", &n);
     syscall
     move $s0, $v0
     li   $s1, 0             # i = 0
 main_loop:
-    bge  $s1, $s0, main_done    # for (i = 0; i < n; i++) {
+    bge  $s1, $s0, main__epilogue   # for (i = 0; i < n; i++) {
     li   $v0, 5                 #     scanf("%d", &target);
     syscall
     move $a0, $v0               #     search(target, 0, 15)
@@ -2088,21 +2100,22 @@ main_loop:
     syscall
     addi $s1, $s1, 1
     b    main_loop              # }
-main_done:
-    lw   $s1, 0($sp)
-    lw   $s0, 4($sp)
-    lw   $ra, 8($sp)
-    addi $sp, $sp, 12
+main__epilogue:
+    pop  $s1
+    pop  $s0
+    pop  $ra
+    end
     li   $v0, 0
     jr   $ra
 
 # search(target, lo, hi) — $a0, $a1, $a2; index or -1 in $v0
 search:
-    addi $sp, $sp, -4       # only $ra needs saving: nothing is used after the call
-    sw   $ra, 0($sp)
-
+search__prologue:
+    begin                   # only $ra: nothing else is needed after the call
+    push $ra
+search__body:
     li   $v0, -1
-    bgt  $a1, $a2, search_return    # if (lo > hi) return -1;
+    bgt  $a1, $a2, search__epilogue    # if (lo > hi) return -1;
 
     add  $t0, $a1, $a2      # mid = (lo + hi) / 2
     div  $t0, $t0, 2
@@ -2110,19 +2123,19 @@ search:
     lw   $t2, sorted($t1)   # sorted[mid]
 
     move $v0, $t0
-    beq  $t2, $a0, search_return    # if (sorted[mid] == target) return mid;
+    beq  $t2, $a0, search__epilogue    # if (sorted[mid] == target) return mid;
 
     blt  $t2, $a0, go_right
     addi $a2, $t0, -1       # return search(target, lo, mid - 1);
     jal  search
-    b    search_return
+    b    search__epilogue
 go_right:
     addi $a1, $t0, 1        # return search(target, mid + 1, hi);
     jal  search
 
-search_return:
-    lw   $ra, 0($sp)
-    addi $sp, $sp, 4
+search__epilogue:
+    pop  $ra
+    end
     jr   $ra
 `,
       notes: 'The recursive call\'s result is returned unchanged, so nothing has to survive the call except <code>$ra</code>. That is why search saves only $ra. Making main a real function (saving $ra, keeping n and i in $s registers) is what the marker checks.'

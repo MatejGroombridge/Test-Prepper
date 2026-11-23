@@ -255,7 +255,7 @@ questions more, totalling 100.
 **MIPS answers run in the browser.** `js/mips.js` is a small mipsy-style assembler and
 simulator: the syscalls the course uses (1, 4, 5, 8, 9, 10, 11, 12), the pseudo-
 instructions (`li`, `la`, `blt`, three-operand `mul`/`div`/`rem`, immediates as third
-operands), constants (`N = 10`, `.space 4 * N`), and mipsy's errors: using an
+operands, and the stack helpers `begin`, `end`, `push`, `pop` that the sample answers use), constants (`N = 10`, `.space 4 * N`), and mipsy's errors: using an
 uninitialised register or memory, overflow in `add`/`addi`/`sub`, unaligned accesses,
 falling off the end of `main`. Each MIPS question has **Run** (your own input),
 **Run autotests** (the examples, like `1521 autotest`) and **Mark it** (the examples
