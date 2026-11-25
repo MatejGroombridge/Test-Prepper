@@ -262,6 +262,8 @@
   var state = {
     mode: 'practice',
     topics: null,          // Set of enabled topics
+    formats: null,         // Set of enabled formats (when templates set one)
+    batches: null,         // Set of enabled question batches (when the subject has them)
     current: null,         // {question, node, results:[]}
     test: null             // {questions, nodes, endsAt, timerId, submitted}
   };
@@ -962,15 +964,23 @@
 
   /* ================= practice mode ================= */
 
+  /* A template belongs to the selected batches if it has a question in any
+     of them. Templates without a `batches` list are in every batch. */
+  function inBatches(t, sel) {
+    return !sel || !t.batches || t.batches.some(function (b) { return sel[b]; });
+  }
+
   function enabledTemplates() {
     return Q.templates.filter(function (t) {
       return (!state.topics || state.topics[t.topic]) &&
-        (!state.formats || !t.format || state.formats[t.format]);
+        (!state.formats || !t.format || state.formats[t.format]) &&
+        inBatches(t, state.batches);
     });
   }
 
   function newQuestion(sameTemplate) {
     var pool = enabledTemplates();
+    if (!pool.length) pool = Q.templates.filter(function (t) { return inBatches(t, state.batches); });
     if (!pool.length) pool = Q.templates;
     var tplId;
     if (sameTemplate && state.current) tplId = state.current.question.id;
@@ -1030,14 +1040,21 @@
     var mins = Math.max(5, Math.min(180, parseInt($('#testMins').value, 10) || 45));
     var questions;
     if (fixedFormatTest()) {
-      // the subject assembles a paper in the exact shape of its real test
-      questions = Q.mockTest.build().filter(Boolean);
+      // the subject assembles a paper in the exact shape of its real test,
+      // from the batch chosen on the setup card
+      if (hasBatches()) Q.setBatches(testBatchSelection());
+      try { questions = Q.mockTest.build().filter(Boolean); }
+      finally { if (hasBatches()) Q.setBatches(state.batches); }
     } else {
       var n = Math.max(2, Math.min(8, parseInt($('#testQs').value, 10) || 4));
       var mix = $('#testMix').value;
-      var pool;
+      var pool, tsel = hasBatches() ? testBatchSelection() : null;
       if (mix === 'weak') pool = weakestOrder();
       else pool = Q.templates.slice().sort(function () { return Math.random() - 0.5; });
+      if (tsel) {
+        var inSel = pool.filter(function (t) { return inBatches(t, tsel); });
+        if (inSel.length) pool = inSel;
+      }
       if (mix === 'balanced') {
         // one per topic first, then fill
         var seen = {}, first = [], rest = [];
@@ -1046,7 +1063,9 @@
       }
       var chosen = [];
       for (var i = 0; i < n; i++) chosen.push(pool[i % pool.length]);
-      questions = chosen.map(function (t) { return Q.build(t.id, Math.floor(Math.random() * 1e9)); }).filter(Boolean);
+      if (tsel) Q.setBatches(tsel);
+      try { questions = chosen.map(function (t) { return Q.build(t.id, Math.floor(Math.random() * 1e9)); }).filter(Boolean); }
+      finally { if (tsel) Q.setBatches(state.batches); }
     }
 
     $('#testSetup').classList.add('hidden');
@@ -1360,7 +1379,7 @@
   function filterMenu(host, noun, items, store, onChange, onClose) {
     host.innerHTML = '';
     host.classList.remove('open');
-    items.forEach(function (it) { store[it.key] = true; });
+    items.forEach(function (it) { if (store[it.key] === undefined) store[it.key] = true; });
     var btn = el('button', 'menubtn');
     btn.type = 'button';
     btn.setAttribute('aria-haspopup', 'true');
@@ -1395,7 +1414,7 @@
     items.forEach(function (it) {
       var row = el('label', 'menurow');
       var cb = document.createElement('input');
-      cb.type = 'checkbox'; cb.checked = true; cb._key = it.key;
+      cb.type = 'checkbox'; cb.checked = !!store[it.key]; cb._key = it.key;
       cb.onchange = function () {
         store[it.key] = cb.checked;
         if (!items.some(function (x) { return store[x.key]; })) store[it.key] = true;
@@ -1437,8 +1456,67 @@
   /* After the filters change, swap the question only if it no longer fits. */
   function refreshIfFiltered() {
     if (state.mode !== 'practice' || !state.current) return;
-    var id = state.current.question.id;
-    if (!enabledTemplates().some(function (t) { return t.id === id; })) newQuestion(false);
+    var q = state.current.question;
+    if (!enabledTemplates().some(function (t) { return t.id === q.id; }) ||
+        (state.batches && q.batch && !state.batches[q.batch])) newQuestion(false);
+  }
+
+  /* ---- question batches: a subject may split its banks into batches
+     (e.g. a second set written after the first was finished). The choice is
+     remembered per subject and handed to the subject via setBatches(). ---- */
+  function hasBatches() { return !!(Q.batches && Q.batches.length >= 2 && Q.setBatches); }
+  function batchKey() { return 'practice-batches-' + Q.id; }
+
+  function loadBatches() {
+    var saved = null;
+    try { saved = JSON.parse(localStorage.getItem(batchKey()) || 'null'); } catch (e) { saved = null; }
+    var sel = {};
+    Q.batches.forEach(function (b) { sel[b.key] = !saved || saved[b.key] !== false; });
+    if (!Q.batches.some(function (b) { return sel[b.key]; })) Q.batches.forEach(function (b) { sel[b.key] = true; });
+    return sel;
+  }
+
+  function onBatchChange() {
+    try { localStorage.setItem(batchKey(), JSON.stringify(state.batches)); } catch (e) { /* private mode */ }
+    Q.setBatches(state.batches);
+    syncTestBatch();
+  }
+
+  /* The mock-test select follows the practice menu: one batch on → that
+     batch, otherwise all of them. It can then be changed on its own. */
+  function syncTestBatch() {
+    var sel = $('#testBatch');
+    if (!sel || !hasBatches()) return;
+    var on = Q.batches.filter(function (b) { return state.batches[b.key]; });
+    sel.value = on.length === 1 ? on[0].key : 'all';
+  }
+
+  function testBatchSelection() {
+    var v = $('#testBatch').value, sel = {};
+    Q.batches.forEach(function (b) { sel[b.key] = v === 'all' || v === b.key; });
+    return sel;
+  }
+
+  function initBatches() {
+    var host = $('#batchMenu'), wrap = $('#testBatchWrap'), tsel = $('#testBatch');
+    host.innerHTML = '';
+    state.batches = null;
+    var on = hasBatches();
+    host.classList.toggle('hidden', !on);
+    wrap.classList.toggle('hidden', !on);
+    if (!on) { if (Q.setBatches) Q.setBatches(null); return; }
+    state.batches = loadBatches();
+    Q.setBatches(state.batches);
+    tsel.innerHTML = '';
+    [{ key: 'all', label: 'All batches' }].concat(Q.batches).forEach(function (b) {
+      var o = document.createElement('option');
+      o.value = b.key; o.textContent = b.label;
+      tsel.appendChild(o);
+    });
+    filterMenu(host, 'batches',
+      Q.batches.map(function (b) { return { key: b.key, label: b.label }; }),
+      state.batches, onBatchChange, refreshIfFiltered);
+    syncTestBatch();
   }
 
   function initTopics() {
@@ -1460,6 +1538,7 @@
         formats.map(function (f) { return { key: f, label: f }; }),
         state.formats, null, refreshIfFiltered);
     }
+    initBatches();
   }
 
   function init() {

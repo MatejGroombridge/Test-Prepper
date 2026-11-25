@@ -74,6 +74,7 @@ js/subjects/comp2511-code.js     COMP2511 domain models, refactoring and build-f
 js/subjects/comp2511-practice.js COMP2511 course practice questions and Week 10 tutorial (MCQ, short, architecture)
 js/subjects/comp2511-labs.js     COMP2511 course exercises: TMS, Airline, Shopping, Barbie, Engineering, Gardening, Shipping, Business rules
 js/subjects/comp2511-exam.js     COMP2511 harder exam-style set across all four sections
+js/subjects/comp2511-batch2.js   COMP2511 Batch 2: a second full set for every section
 js/subjects/comp2511.js    COMP2511 primers, templates, mock exam, drills, reference
 js/subjects/comp1521-mips.js  COMP1521 MIPS questions: starters, sample answers, test inputs
 js/subjects/comp1521-c.js     COMP1521 C questions: provided files, examples, sample answers
@@ -226,6 +227,30 @@ style; two deliberately build on sample-exam scenarios with a twist (the library
 sequence diagram adds a reservation queue, and the e-commerce scaling question asks you
 to evaluate a migration plan).
 
+### Batch 2
+
+A second set of questions, written once Batch 1 was finished, in the same style and at
+the same difficulty as the sample exam and Batch 1. The **Batches** menu next to Formats
+picks which set practice draws from (remembered per subject), and the mock exam has a
+**Questions from** select, so a full 100-mark paper can come from Batch 2 alone.
+Everything above is Batch 1. Batch 2 has:
+
+- **46 multiple-choice** across all 11 topics (overload resolution with null, private
+  methods and dispatch, contracts for search and thermostats, LoD, ISP, DIP, erasure,
+  lazy streams, effectively final, Observer detaching mid-notify, Singleton races,
+  volatile, saga-friendly microservice data).
+- **24 short answers** across the 8 Section 2 topics (Stack extends ArrayList,
+  constructor chaining, a rounding thermostat, BoundedQueue contracts, Duck behaviours,
+  PECS with Timestamp, JUnit tests, a smells-heavy library checkout, a broken Singleton,
+  wait-in-if, CompletableFuture with a fallback).
+- **9 architecture questions** and **3 Mermaid sequence diagrams** (library kiosk,
+  food order with restaurant accept/reject, login with 2FA).
+- **3 domain models** (cinema chain, course enrolments with nested prerequisites and
+  people with two roles, car share with plans and business accounts).
+- **3 refactors** (car-park pricing with Strategy, org-chart costs with Composite, chat
+  message filters with Decorator) and **3 builds** (online auction with Observer,
+  project planner with Composite, dungeon levels with Abstract Factory). Their Java
+  sample answers compile and pass their tests on JDK 21.
 ## COMP1521 Computer Systems Fundamentals — final exam
 
 Built from the 26T2 exam format (10 practical questions in 3 hours, easiest first,
