@@ -78,6 +78,7 @@ js/subjects/comp2511-batch2.js   COMP2511 Batch 2: a second full set for every s
 js/subjects/comp2511.js    COMP2511 primers, templates, mock exam, drills, reference
 js/subjects/comp1521-mips.js  COMP1521 MIPS questions: starters, sample answers, test inputs
 js/subjects/comp1521-c.js     COMP1521 C questions: provided files, examples, sample answers
+js/subjects/comp1521-batch2.js COMP1521 Batch 2: the 20T3, 22T2 and 22T3 finals
 js/subjects/comp1521.js       COMP1521 templates, mock exam, primers, drills, reference
 js/subjects/_template.js   annotated starting point for a new subject (not loaded)
 js/app.js                  UI, marking, progress — subject-agnostic
@@ -307,6 +308,39 @@ bit reversal, rotation, sign extension, two's complement, UTF-8 encode, decode, 
 and reverse) was ported line by line to Python and matched against independent
 references on thousands of random inputs. The float examples were checked against
 Python's `struct`.
+
+### Batch 2: the 20T3, 22T2 and 22T3 finals
+
+Thirty more questions, every question from three past finals: 20T3 (Q1–Q7 and Q9–Q11;
+the paper itself drops Q8 as no longer in the course), 22T2 (Q1–Q10) and 22T3
+(Q1–Q10). Choose them with the **Batches** menu, next to Formats; the mock exam's
+**Questions from** select can build a full 10-question paper from Batch 2 alone. Each
+paper is also its own topic (*20T3 past paper*, *22T2 past paper*, *22T3 past paper*),
+in question order and with the paper's own marks.
+
+- **12 MIPS**, all runnable with autotests and unseen tests: the warm-ups, the bit
+  counters, a low/high loop, a 2D-array reflect and quicksort with VLAs on the stack,
+  the Towers of Hanoi (assembled with a provided `main.s`, as `1521 mipsy main.s
+  answer.s`), a recursive-descent boolean parser, and the arbitrary-precision `+`/`*`
+  calculator.
+- **18 C**: bitwise functions, environment variables, file bytes, `posix_spawnp` per
+  input line, comparing directory trees, `find` with depth limits, a quota watcher
+  with one thread per file, the `rush` shell, deleting a line, UTF-8 slicing and
+  repair, and splitting a file across five threads.
+
+Question text, examples and restrictions are the papers'. The papers did not include
+their starter files, test harnesses or example data, so those are **reconstructed** to
+fit, and each such question says so. 22T2 Q8's `main` reads the number of disks so it
+can be tested at several sizes, and 22T3 Q9's example files are regenerated: evaluating
+them reproduces the paper's counts (288, 32, 62) exactly.
+
+How Batch 2 was checked: every MIPS sample answer passes all its tests in the
+simulator, and each JavaScript reference agrees with the paper's C program compiled
+with gcc on every test input. Every C sample answer was compiled with gcc and run on
+the paper's examples, which it reproduces exactly (including 22T2 Q7's directory
+listings and 22T3 Q7's invalid-UTF-8 line). The quota watcher was also replayed
+through the paper's two-terminal scenario under ThreadSanitizer with no races
+reported.
 
 ## Adding a subject
 

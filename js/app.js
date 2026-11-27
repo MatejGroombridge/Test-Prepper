@@ -639,6 +639,10 @@
       });
       node.appendChild(code);
       node._answerText = function () { return code.value; };
+      /* Some questions assemble a provided file with the answer, as in
+         1521 mipsy main.s answer.s */
+      var mipsSource = function () { return code.value + (part.link ? '\n' + part.link : ''); };
+      var mipsOpts = part.maxSteps ? { maxSteps: part.maxSteps } : undefined;
 
       var runBox = el('div', 'runbox');
       var stdinTa = el('textarea', 'ans stdin');
@@ -662,7 +666,7 @@
       node.appendChild(runBox);
 
       runBtn.onclick = function () {
-        var res = window.Mips.run(code.value, stdinTa.value);
+        var res = window.Mips.run(mipsSource(), stdinTa.value, mipsOpts);
         runOut.classList.remove('hidden');
         runOut.className = 'runout' + (res.error ? ' err' : '');
         runOut.textContent = res.stdout + (res.error ? (res.stdout && !/\n$/.test(res.stdout) ? '\n' : '') + res.error : '') ||
@@ -685,7 +689,7 @@
         return { html: html, passed: passed };
       };
       testBtn.onclick = function () {
-        var res = window.Mips.test(code.value, part.tests || []);
+        var res = window.Mips.test(mipsSource(), part.tests || [], mipsOpts);
         testOut.classList.remove('hidden');
         testOut.innerHTML = showTests(res, 'Autotests').html +
           (part.hidden && part.hidden.length ? '<div class="small muted">Marking also runs ' + part.hidden.length + ' unseen test' + (part.hidden.length > 1 ? 's' : '') + ', as the real automarker does.</div>' : '');
@@ -700,7 +704,7 @@
         var all = (part.tests || []).map(function (t) { return { stdin: t.stdin, stdout: t.stdout }; })
           .concat((part.hidden || []).map(function (t) { return { stdin: t.stdin, stdout: t.stdout, hidden: true }; }));
         var tried = mipsAttempted();
-        var res = tried ? window.Mips.test(code.value, all) : [];
+        var res = tried ? window.Mips.test(mipsSource(), all, mipsOpts) : [];
         res.forEach(function (r, i) { r.hidden = !!all[i].hidden; });
         var sum = tried ? showTests(res, 'All tests') : { html: '<b>No attempt.</b>', passed: 0 };
         var score = all.length ? sum.passed / all.length : 0;

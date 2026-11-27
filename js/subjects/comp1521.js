@@ -1,5 +1,6 @@
 /* subjects/comp1521.js — COMP1521 Computer Systems Fundamentals, final exam.
-   Questions live in comp1521-mips.js and comp1521-c.js (load those first);
+   Questions live in comp1521-mips.js and comp1521-c.js (Batch 1) and
+   comp1521-batch2.js (Batch 2: the 20T3, 22T2 and 22T3 papers); load those first.
    this file turns them into templates, assembles the mock exam, and holds
    the topic primers, drills and the reference drawer.
 
@@ -38,8 +39,31 @@
   var ITEMS = D.MIPS.map(function (q) { q.lang = 'MIPS'; return q; })
     .concat(D.C.map(function (q) { q.lang = 'C'; return q; }));
   function pool(slotKey) { return ITEMS.filter(function (q) { return q.slot === slotKey; }); }
-  var PAST = ITEMS.filter(function (q) { return /^p20-/.test(q.id); })
-    .sort(function (a, b) { return SLOT[a.slot].n - SLOT[b.slot].n; });
+  /* Past papers: Batch 1 holds the 20T2 paper, Batch 2 the later ones. */
+  function paperOf(q) { return q.paper || (/^p20-/.test(q.id) ? '20T2' : null); }
+  var PAPERS = [];
+  ITEMS.forEach(function (q) { var p = paperOf(q); if (p && PAPERS.indexOf(p) < 0) PAPERS.push(p); });
+  PAPERS.sort();
+  function paperItems(paper) {
+    return ITEMS.filter(function (q) { return paperOf(q) === paper; })
+      .sort(function (a, b) { return (a.qn || SLOT[a.slot].n) - (b.qn || SLOT[b.slot].n); });
+  }
+
+  /* Question batches. Items carry `batch` (absent = batch 1). The app passes
+     the selected batches to setBatches(); deals, the mock exam and the
+     template list then use only those. */
+  var active = null;
+  function batchOf(q) { return String(q.batch || 1); }
+  function inActive(list) {
+    if (!active) return list;
+    var on = list.filter(function (q) { return active[batchOf(q)]; });
+    return on.length ? on : list;
+  }
+  function batchesIn(list) {
+    var seen = [];
+    list.forEach(function (q) { if (seen.indexOf(batchOf(q)) < 0) seen.push(batchOf(q)); });
+    return seen.sort();
+  }
 
   /* ------------------------------ helpers ------------------------------ */
 
@@ -59,6 +83,8 @@
   /* Draw without repeats until a pool is exhausted, then reshuffle. */
   var decks = {};
   function deal(key, list, rng) {
+    list = inActive(list);
+    key += '|' + batchesIn(list).join(',');
     if (!decks[key] || !decks[key].length) decks[key] = rng.shuffle(list.map(function (_, i) { return i; }));
     return list[decks[key].pop()];
   }
@@ -68,7 +94,7 @@
     return q.cases.map(function (stdin) {
       var input = stdin.replace(/\n$/, '');
       var out = q.ref(stdin).replace(/\n$/, '');
-      return '1521 mipsy ' + q.file + (input ? '\n' + input : '') + (out ? '\n' + out : '');
+      return '1521 mipsy ' + (q.cmd || q.file) + (input ? '\n' + input : '') + (out ? '\n' + out : '');
     }).join('\n\n');
   }
 
@@ -87,6 +113,7 @@
         kind: 'mips', label: '', marks: marks, file: q.file, rows: 20,
         prompt: 'Edit <code>' + q.file + '</code>. Use <b>Run</b> to try your own input and <b>Run autotests</b> as you would <code>1521 autotest</code>. <b>Mark it</b> also runs unseen tests.',
         prefill: q.starter,
+        link: q.link, maxSteps: q.maxSteps,
         tests: q.cases.map(function (st) { return { stdin: st, stdout: q.ref(st) }; }),
         hidden: q.hidden.map(function (st) { return { stdin: st, stdout: q.ref(st) }; }),
         model: q.model, notes: q.notes,
@@ -331,7 +358,7 @@
     }
   };
   GUIDES.past = {
-    idea: 'The nine questions from the 20T2 final you were given (questions 9 and 11 were advanced MIPS and are not in the paper). Each also appears in its topic. The MIPS ones run against the original examples plus extra unseen tests.',
+    idea: 'The questions from the past finals you were given: 20T2 (Batch 1), and 20T3, 22T2 and 22T3 (Batch 2), each paper its own topic so you can work through one in order. Each question also appears in its topic. MIPS ones run against the paper\'s examples plus extra unseen tests. Where a paper\'s starter or test files were not provided, the question says so and uses a reconstruction.',
     steps: ['Do them in order under time pressure: the real exam also starts easy and gets harder.', 'For C questions, compile on CSE with dcc and run the examples before comparing with the sample answer.'],
     traps: ['Matching only the given examples: the real automarker runs unseen tests, and a human checks the restrictions.']
   };
@@ -344,18 +371,26 @@
       build: function (rng) {
         var q = deal(s.key, pool(s.key), rng);
         var cd = card(q, s.marks);
-        return { intro: cd.intro, data: cd.data, parts: cd.parts, subtitle: q.title };
+        return { intro: cd.intro, data: cd.data, parts: cd.parts, subtitle: q.title, batch: batchOf(q) };
       }
     };
   });
-  TEMPLATES.push({
-    id: 'past', topic: '20T2 past paper', title: '20T2 past paper', guide: GUIDES.past,
-    build: function (rng) {
-      var q = deal('past', PAST, rng);
-      var cd = card(q, SLOT[q.slot].marks);
-      cd.parts[0].tpl = q.slot;
-      return { intro: cd.intro, data: cd.data, parts: cd.parts, subtitle: q.title };
-    }
+  TEMPLATES.forEach(function (t) { t.batches = batchesIn(pool(t.id)); });
+
+  /* One template per past paper (20T2 keeps the id 'past' so its progress
+     carries over). Questions come in order; each is marked under its slot. */
+  PAPERS.forEach(function (paper) {
+    var items = paperItems(paper);
+    var id = paper === '20T2' ? 'past' : 'past-' + paper.toLowerCase();
+    TEMPLATES.push({
+      id: id, topic: paper + ' past paper', title: paper + ' past paper', guide: GUIDES.past, batches: batchesIn(items),
+      build: function (rng) {
+        var q = deal(id, items, rng);
+        var cd = card(q, q.paperMarks || SLOT[q.slot].marks);   // the paper's own marks
+        cd.parts[0].tpl = q.slot;
+        return { intro: cd.intro, data: cd.data, parts: cd.parts, subtitle: 'Q' + (q.qn || SLOT[q.slot].n) + ' · ' + q.title, batch: batchOf(q) };
+      }
+    });
   });
 
   function build(templateId, seed) {
@@ -365,7 +400,7 @@
     var rng = global.Stats.rng(seed);
     var q = tpl.build(rng);
     q.id = tpl.id; q.topic = tpl.topic;
-    q.title = tpl.id === 'past' ? q.subtitle : tpl.title + ': ' + q.subtitle;
+    q.title = /^past/.test(tpl.id) ? tpl.title + ', ' + q.subtitle : tpl.title + ': ' + q.subtitle;
     q.marks = q.parts.reduce(function (s, p) { return s + (p.marks || 0); }, 0);
     q.seed = seed;
     return q;
@@ -483,9 +518,13 @@
     id: 'comp1521',
     code: 'COMP1521',
     name: 'Computer Systems Fundamentals',
-    tagline: 'Practical C and MIPS questions in the final exam\'s style. MIPS answers run in the browser.',
+    tagline: 'Practical C and MIPS questions in the final exam\'s style, in two batches: Batch 1 is our questions and the 20T2 paper, Batch 2 the 20T3, 22T2 and 22T3 papers. MIPS answers run in the browser.',
     templates: TEMPLATES,
     build: build,
+    batches: batchesIn(ITEMS).map(function (b) {
+      return { key: b, label: b === '2' ? 'Batch 2 (20T3, 22T2, 22T3)' : 'Batch ' + b };
+    }),
+    setBatches: function (sel) { active = sel; },
     labels: { guide: 'Topic primer', guideOpen: 'Hide primer', same: 'Another from this topic' },
 
     mockTest: {
