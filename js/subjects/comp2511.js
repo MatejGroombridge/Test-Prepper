@@ -1,6 +1,7 @@
 /* subjects/comp2511.js — COMP2511 Object-Oriented Design & Programming,
    final exam (26T3 format). Content lives in comp2511-mcq.js, -written.js,
-   -code.js, -practice.js and -labs.js (load those first); this file
+   -code.js, -practice.js, -labs.js, -exam.js and -batch2.js (load those
+   first); this file
    builds the templates, the mock exam in the real four-section shape, the
    drills and the reference drawer, and registers the subject.
 
@@ -550,7 +551,26 @@ sequenceDiagram
     }
     return decks[key].pop();
   }
-  function dealFrom(key, bank, rng) { return bank[deal(key, bank.length, rng)]; }
+
+  /* Question batches. Items carry `batch` (absent = batch 1). The app hands
+     over the selected batches with setBatches(); every deal, the mock exam
+     and the template list then draw only from those. */
+  var active = null, lastDealt = null;
+  function batchOf(item) { return String((item && item.batch) || 1); }
+  function inBatch(item) { return !active || !!active[batchOf(item)]; }
+  function inActive(bank) { return bank.filter(inBatch); }
+  function batchesIn(bank) {
+    var seen = [];
+    bank.forEach(function (x) { if (seen.indexOf(batchOf(x)) < 0) seen.push(batchOf(x)); });
+    return seen;
+  }
+
+  function dealFrom(key, bank, rng) {
+    var pool = inActive(bank), sig = active ? Object.keys(active).filter(function (k) { return active[k]; }).join(',') : '*';
+    if (!pool.length) { pool = bank; sig = '*'; }
+    lastDealt = pool[deal(key + '|' + sig, pool.length, rng)];
+    return lastDealt;
+  }
 
   function filesBlock(files, name) {
     return { name: name || 'Starter code', langs: files.map(function (f) { return { name: f.name, text: f.text }; }) };
@@ -662,7 +682,7 @@ sequenceDiagram
 
   D.TOPICS.forEach(function (t) {
     TEMPLATES.push({
-      id: 'mc-' + t.key, topic: t.name, format: 'Multiple choice', marks: 1,
+      id: 'mc-' + t.key, topic: t.name, format: 'Multiple choice', marks: 1, batches: batchesIn(D.MCQ[t.key]),
       title: t.name + ': multiple choice', guide: GUIDES[t.key],
       build: function (rng) { return { intro: '', data: [], parts: [mcPart(rng, dealFrom('mc-' + t.key, D.MCQ[t.key], rng))] }; }
     });
@@ -670,7 +690,7 @@ sequenceDiagram
 
   Object.keys(D.SHORT).forEach(function (key) {
     TEMPLATES.push({
-      id: 'sa-' + key, topic: TOPIC_NAME[key], format: 'Short answer',
+      id: 'sa-' + key, topic: TOPIC_NAME[key], format: 'Short answer', batches: batchesIn(D.SHORT[key]),
       title: TOPIC_NAME[key] + ': short answer', guide: GUIDES[key],
       build: function (rng) {
         return writtenCard(dealFrom('sa-' + key, D.SHORT[key], rng));
@@ -679,28 +699,28 @@ sequenceDiagram
   });
 
   TEMPLATES.push({
-    id: 'dm', topic: TOPIC_NAME.model, format: 'Design & programming',
+    id: 'dm', topic: TOPIC_NAME.model, format: 'Design & programming', batches: batchesIn(D.DOMAIN),
     title: 'Domain modelling', guide: GUIDE_DM,
     build: function (rng) { return buildDomain(dealFrom('dm', D.DOMAIN, rng)); }
   });
   TEMPLATES.push({
-    id: 'refactor', topic: TOPIC_NAME.smells, format: 'Design & programming',
+    id: 'refactor', topic: TOPIC_NAME.smells, format: 'Design & programming', batches: batchesIn(D.REFACTOR),
     title: 'Refactor and extend', guide: GUIDE_REFACTOR,
     build: function (rng) { return buildRefactor(dealFrom('refactor', D.REFACTOR, rng), rng); }
   });
   TEMPLATES.push({
-    id: 'scratch', topic: TOPIC_NAME.patterns, format: 'Design & programming',
+    id: 'scratch', topic: TOPIC_NAME.patterns, format: 'Design & programming', batches: batchesIn(D.SCRATCH),
     title: 'Design and build from scratch', guide: GUIDE_SCRATCH,
     build: function (rng) { return buildScratch(dealFrom('scratch', D.SCRATCH, rng), rng); }
   });
   TEMPLATES.push({
-    id: 'seq', topic: TOPIC_NAME.seq, format: 'Architecture',
+    id: 'seq', topic: TOPIC_NAME.seq, format: 'Architecture', batches: batchesIn(D.SEQ),
     title: 'Sequence diagram (Mermaid)', guide: GUIDES.seq,
     build: function (rng) { return buildSeq(dealFrom('seq', D.SEQ, rng)); }
   });
   Object.keys(D.ARCH).forEach(function (key) {
     TEMPLATES.push({
-      id: 'arch-' + key, topic: TOPIC_NAME[key], format: 'Architecture',
+      id: 'arch-' + key, topic: TOPIC_NAME[key], format: 'Architecture', batches: batchesIn(D.ARCH[key]),
       title: TOPIC_NAME[key] + ': architecture question', guide: GUIDES[key],
       build: function (rng) {
         return writtenCard(dealFrom('arch-' + key, D.ARCH[key], rng));
@@ -716,8 +736,10 @@ sequenceDiagram
     for (var k = 0; k < 40; k++) {
       var rng = global.Stats.rng(seed + k * 7919);
       var q;
+      lastDealt = null;
       try { q = tpl.build(rng); } catch (e) { q = null; }
       if (q) {
+        if (lastDealt) q.batch = batchOf(lastDealt);
         q.id = tpl.id; q.topic = tpl.topic; q.title = tpl.title;
         q.marks = q.parts.reduce(function (s, p) { return s + (p.marks || 0); }, 0);
         q.seed = seed + k * 7919;
@@ -763,7 +785,7 @@ sequenceDiagram
   function flatPool(banks) {
     var pool = [];
     Object.keys(banks).forEach(function (key) {
-      banks[key].forEach(function (item) { pool.push({ key: key, item: item }); });
+      inActive(banks[key]).forEach(function (item) { pool.push({ key: key, item: item }); });
     });
     return pool;
   }
@@ -784,14 +806,15 @@ sequenceDiagram
      dealt from all refactor and build problems; its partner makes up the
      remaining marks, preferring the other kind. Refactors come first. */
   function section3Pair(rng) {
-    var all = D.REFACTOR.map(function (item) { return { kind: 'refactor', item: item }; })
-      .concat(D.SCRATCH.map(function (item) { return { kind: 'scratch', item: item }; }));
-    var first = all[deal('s3', all.length, rng)];
+    var all = inActive(D.REFACTOR).map(function (item) { return { kind: 'refactor', item: item }; })
+      .concat(inActive(D.SCRATCH).map(function (item) { return { kind: 'scratch', item: item }; }));
+    if (!all.length) all = D.REFACTOR.map(function (item) { return { kind: 'refactor', item: item }; });
+    var first = all[deal('s3|' + all.length, all.length, rng)];
     var need = 30 - itemMarks(first.item);
     var fits = all.filter(function (x) { return x !== first && itemMarks(x.item) === need; });
     var other = fits.filter(function (x) { return x.kind !== first.kind; });
-    var partner = rng.pick(other.length ? other : fits);
-    var pair = [first, partner];
+    var partner = rng.pick(other.length ? other : fits.length ? fits : all.filter(function (x) { return x !== first; }));
+    var pair = partner ? [first, partner] : [first];
     return pair.sort(function (a, b) { return (a.kind === 'scratch') - (b.kind === 'scratch'); });
   }
 
@@ -802,7 +825,7 @@ sequenceDiagram
     // ---- Section 1: 8 multiple choice, distinct topics, at least one
     //      from each architecture topic (as in the sample) ----
     var arch = D.TOPICS.filter(function (t) { return t.key === 'archfund' || t.key === 'styles'; });
-    var rest = rng.shuffle(D.TOPICS.filter(function (t) { return arch.indexOf(t) < 0; })).slice(0, 6);
+    var rest = rng.shuffle(D.TOPICS.filter(function (t) { return arch.indexOf(t) < 0 && inActive(D.MCQ[t.key]).length; })).slice(0, 6);
     var mcTopics = rest.concat(arch).sort(function (a, b) { return D.TOPICS.indexOf(a) - D.TOPICS.indexOf(b); });
     var mcParts = mcTopics.map(function (t, i) {
       var p = mcPart(rng, dealFrom('mc-' + t.key, D.MCQ[t.key], rng), 'Q' + (i + 1) + '.');
@@ -954,15 +977,28 @@ sequenceDiagram
   Object.keys(D.SHORT).forEach(function (k) { nSa += D.SHORT[k].length; });
   Object.keys(D.ARCH).forEach(function (k) { nArch += D.ARCH[k].length; });
 
+  /* Every batch that appears in any bank, in order. */
+  var BATCHES = [];
+  [D.DOMAIN, D.REFACTOR, D.SCRATCH, D.SEQ].concat(
+    Object.keys(D.MCQ).map(function (k) { return D.MCQ[k]; }),
+    Object.keys(D.SHORT).map(function (k) { return D.SHORT[k]; }),
+    Object.keys(D.ARCH).map(function (k) { return D.ARCH[k]; })
+  ).forEach(function (bank) {
+    batchesIn(bank).forEach(function (b) { if (BATCHES.indexOf(b) < 0) BATCHES.push(b); });
+  });
+  BATCHES.sort();
+
   var SUBJECT = {
     id: 'comp2511',
     code: 'COMP2511',
     name: 'OO Design & Programming — Final exam',
-    tagline: 'Built on the 26T3 exam outline, the sample exam, the course practice questions and the Week 10 tutorial: ' + nMc + ' multiple-choice, ' + nSa + ' short-answer and ' + nArch + ' architecture questions, ' +
+    tagline: 'Built on the 26T3 exam outline, the sample exam, the course practice questions and the Week 10 tutorial, in ' + BATCHES.length + ' batches (choose with the Batches menu): ' + nMc + ' multiple-choice, ' + nSa + ' short-answer and ' + nArch + ' architecture questions, ' +
       D.DOMAIN.length + ' domain models, ' + D.REFACTOR.length + ' refactor-and-extend problems, ' + D.SCRATCH.length + ' build-from-scratch problems and ' + D.SEQ.length + ' Mermaid sequence diagrams. ' +
       'Code and written answers are self-assessed against a sample and a marker’s checklist, or use "Copy for AI hint" for feedback on your attempt.',
     templates: TEMPLATES,
     build: build,
+    batches: BATCHES.map(function (b) { return { key: b, label: 'Batch ' + b }; }),
+    setBatches: function (sel) { active = sel; },
     labels: { guide: 'Topic primer', guideOpen: 'Hide primer', same: 'Another of this type' },
 
     mockTest: {

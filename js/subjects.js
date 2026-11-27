@@ -27,6 +27,12 @@
      // a fixed-format paper instead of "N questions, mixed": build() returns
      // the questions; the question-count and mix fields are then hidden
      mockTest:  { minutes, blurb, build: function () -> [question] }
+     // question batches (e.g. a second set written once the first is done):
+     // the app shows a Batches menu and a mock-test "Questions from" select,
+     // and calls setBatches({key: bool}) (or null for all) before building.
+     // Templates may list the batches they have questions in: batches: ['1','2']
+     batches:   [ {key, label} ],
+     setBatches: function (selection) {}
    }
    Templates that set `format` get a second row of filter chips (e.g. multiple
    choice vs extended response).
